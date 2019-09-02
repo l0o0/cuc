@@ -1,10 +1,13 @@
 import sys
+from datetime import datetime
 from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QDesktopWidget, QLineEdit, \
                             QSystemTrayIcon, QMenu, QAction, QTabWidget, QVBoxLayout, \
                             QPushButton, QTableWidget, QHeaderView, QMessageBox, \
                             QGridLayout, QPushButton, QTableWidgetItem, \
                             QAbstractItemView, QHBoxLayout, QLayout
 from PyQt5.QtGui import QIcon, QPixmap, QDropEvent
+from PyQt5 import QtGui
+from PyQt5 import QtWidgets
 from PyQt5 import QtCore
 
 from task import Tasks, TaskLine
@@ -69,6 +72,64 @@ class TableWidgetDragRows(QTableWidget):
 
 
 
+class HiddenLabel(QLabel):
+    '''
+    QLable hide when mouse pressed
+    '''
+    def __init__(self, buddy, taskline, parent = None):
+        super(HiddenLabel, self).__init__(parent)
+        self.setFixedHeight(25)
+        self.buddy = buddy
+        self.taskline = taskline
+
+    # When it's clicked, hide itself and show its buddy
+    #def mousePressEvent(self, event):
+    #    # left click to edit 
+    #    if event.button() == QtCore.Qt.LeftButton:
+    #        self.hide()
+    #        self.buddy.setText(self.taskline.plain_text)
+    #        self.buddy.show()
+    #        self.buddy.setFocus() # Set focus on buddy so user doesn't have to click again
+#
+
+
+class EditableCell(QWidget):
+    '''
+    QLineEdit show when HiddenLabel is hidden
+    '''
+    def __init__(self, taskline, parent = None):
+        super(EditableCell, self).__init__(parent)
+        self.taskline = taskline
+        # Create ui
+        self.myEdit = QLineEdit()
+        self.myEdit.setFixedHeight(25)
+        self.myEdit.hide() # Hide line edit
+        self.myEdit.returnPressed.connect(self.textEdited)
+        # Create our custom label, and assign myEdit as its buddy
+        self.myLabel = HiddenLabel(self.myEdit, self.taskline) 
+        self.myLabel.setText(self.taskline.enrich_text())
+
+        # Put them under a layout together
+        hLayout = QHBoxLayout()
+        hLayout.addWidget(self.myLabel)
+        hLayout.addWidget(self.myEdit)
+        hLayout.setContentsMargins(0, 0, 0, 0)
+        self.setLayout(hLayout)
+
+    def textEdited(self):
+        # If the input is left empty, revert back to the label showing
+        print('edit finished')
+        print(self.myEdit.text())
+        taskline = TaskLine()
+        taskline.parser(self.myEdit.text())
+        self.taskline = taskline
+        self.myLabel.setText(taskline.enrich_text())
+        self.myEdit.hide()
+        self.myLabel.show()
+        self.myLabel.setFocus()
+
+
+
 class App(QWidget):
 
     def __init__(self, config):
@@ -83,6 +144,7 @@ class App(QWidget):
         self.initUI()
         self.tab1()
         self.tab2()
+        self.tab3()
         self.initTab()
 
 
@@ -118,8 +180,9 @@ class App(QWidget):
         self.layout = QVBoxLayout()
         self.tabs = QTabWidget()       
         self.tabs.resize(478, 358)
-        self.tabs.addTab(self.tab1, "中文")
-        self.tabs.addTab(self.tab2, "Summary")
+        self.tabs.addTab(self.tab1, "TODO")
+        self.tabs.addTab(self.tab2, 'DONE')
+        self.tabs.addTab(self.tab3, "Summary")
 
         # add tabs to widget
         self.layout.addWidget(self.tabs)
@@ -134,8 +197,9 @@ class App(QWidget):
 
         # add text edit line for new task
         self.textboxAdd = QLineEdit()
+        self.textboxAdd.setPlaceholderText('Input something ...')
         self.textboxAdd.setFixedHeight(25)
-        self.textboxAdd.setFixedWidth(430)
+        self.textboxAdd.setFixedWidth(436)
         self.tab1.layout.addWidget(self.textboxAdd, 0, 0, 1, 10)
         self.textboxAdd.returnPressed.connect(self.addLine)
 
@@ -146,7 +210,7 @@ class App(QWidget):
         #self.tab1TaskTable.setShowGrid(False)
         self.tab1TaskTable.setColumnCount(3)
         self.tab1TaskTable.setRowCount(len(self.tasks.tasklines))
-        self.tab1TaskTable.setColumnWidth(0, 360)
+        self.tab1TaskTable.setColumnWidth(0, 380)
         self.tab1TaskTable.setColumnWidth(1, 20)
         self.tab1TaskTable.setColumnWidth(2, 20)
         self.tab1TaskTable.horizontalHeader().setSectionResizeMode(0, QHeaderView.Fixed)
@@ -168,7 +232,7 @@ class App(QWidget):
         # display tasks
         for i, t in enumerate(self.tasks.tasklines):
             print('init row %s' % i)
-            cellwidget = self.createCellQlabel(t.enrich_text())
+            cellwidget = self.createCellQlabel(t)
             self.tab1TaskTable.setCellWidget(i, 0, cellwidget)
             editButton = self.createButton('edit')
             deleteButton = self.createButton('delete')            
@@ -181,10 +245,21 @@ class App(QWidget):
     def tab2(self):
         self.tab2 = QWidget()
         self.tab2.layout = QVBoxLayout()
-        self.lb = QLabel(self)
-        self.lb.setText('Summary')
-        self.tab2.layout.addWidget(self.lb)
+        lb = QLabel()
+        lb.setText('Done')
+        self.tab2.layout.addWidget(lb)
         self.tab2.setLayout(self.tab2.layout)
+
+    
+    # tab3 
+    def tab3(self):
+        self.tab3 = QWidget()
+        self.tab3.layout = QVBoxLayout()
+        lb = QLabel()
+        lb.setText('Summary')
+        self.tab3.layout.addWidget(lb)
+        self.tab3.setLayout(self.tab3.layout)
+
 
         
     def closeEvent(self, event):
@@ -209,13 +284,8 @@ class App(QWidget):
         return self.butt
 
 
-    def createCellQlabel(self, rich_text):
-        cellwidget = QWidget()
-        cellline = QLabel(rich_text)
-        cellwidgetLayout = QHBoxLayout()
-        cellwidgetLayout.addWidget(cellline)
-        cellwidgetLayout.setSizeConstraint(QLayout.SetFixedSize)
-        cellwidget.setLayout(cellwidgetLayout)    
+    def createCellQlabel(self, taskline):
+        cellwidget = EditableCell(taskline) 
         return cellwidget       
 
 
@@ -229,7 +299,7 @@ class App(QWidget):
             self.tab1TaskTable.insertRow(rowidx)
             taskline = TaskLine()
             taskline.parser(self.textboxAdd.text())
-            cellwidget = self.createCellQlabel(taskline.enrich_text())
+            cellwidget = self.createCellQlabel(taskline)
             self.tab1TaskTable.setCellWidget(rowidx, 0, cellwidget)
             editButton = self.createButton('edit')
             deleteButton = self.createButton('delete')
@@ -243,17 +313,40 @@ class App(QWidget):
     @QtCore.pyqtSlot()
     def editButtonAction(self):
         button = self.sender()
-        print('edit', )
+        if button:
+            row = self.tab1TaskTable.indexAt(button.pos()).row()
+            self.editcellwidget = self.tab1TaskTable.cellWidget(row, 0)
+            self.editcellwidget.myLabel.hide()
+            self.editcellwidget.myEdit.setText(self.editcellwidget.taskline.plain_text)
+            self.editcellwidget.myEdit.show()
+            self.editcellwidget.myEdit.setFocus()
+            self.editcellwidget.myEdit.returnPressed.connect(self.editButtonAction2) 
+            self.tasks.tasklines[row] = self.editcellwidget.taskline
+            self.tab1TaskTable.setCellWidget(row, 0, self.editcellwidget)
+            print('edit ', row, self.tasks.tasklines[row].plain_text)
+
+
+    def editButtonAction2(self):
+        # If the input is left empty, revert back to the label showing
+        print('edit finished2')
+        print(self.editcellwidget.myEdit.text())
+        taskline = TaskLine()
+        taskline.parser(self.editcellwidget.myEdit.text())
+        self.editcellwidget.taskline = taskline
+        self.editcellwidget.myLabel.setText(taskline.enrich_text())
+        self.editcellwidget.myEdit.hide()
+        self.editcellwidget.myLabel.show()
+        self.editcellwidget.myLabel.setFocus()
 
     
     @QtCore.pyqtSlot()
     def deleteButtonAction(self):
         button = self.sender()
-        print(type(button))
         if button:
             row = self.tab1TaskTable.indexAt(button.pos()).row()
             #column = self.tab1TaskTable.column(button)
             self.tab1TaskTable.removeRow(row)
+            del self.tasks.tasklines[row]
         print('delete', row)
 
 

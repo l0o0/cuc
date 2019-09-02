@@ -94,7 +94,7 @@ class TaskLine(object):
             style = self.default_style
         rich_text = ""
         if self.priority:
-            rich_text = "<font color=%s>%s</font> " % (
+            rich_text = "<b><font color=%s>%s</font></b> " % (
                 style['priority'][self.priority], self.priority
                 )
         if self.completion_date:
