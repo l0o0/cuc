@@ -36,6 +36,7 @@ class TaskLine(object):
     
 
     def parser(self, plain_text):
+        break_len = 0
         self.plain_text = plain_text.strip()  
 
         # handle mask 
@@ -50,6 +51,7 @@ class TaskLine(object):
         self.priority = self.re_priority.search(self.plain_text)
         if self.priority:
             self.priority = self.priority.groups()[0] 
+            break_len = break_len + 1 + len(self.priority)
         else:
             self.priority = None 
 
@@ -58,9 +60,11 @@ class TaskLine(object):
         if len(self.dates) == 2:
             self.completion_date = self.dates[0]
             self.creation_date = self.dates[1]
+            break_len = break_len + len(self.completion_date) + len(self.creation_date) + 2
         elif len(self.dates) == 1:
             self.completion_date = None
             self.creation_date = self.dates[0]
+            break_len = break_len + len(self.creation_date) + 1
         else:
             self.completion_date = None 
             self.creation_date = None 
@@ -87,6 +91,8 @@ class TaskLine(object):
         tmp = self.re_contexts.sub('', tmp)
         tmp = self.re_keyvalues.sub('', tmp)
         self.content = tmp 
+        break_len = break_len + len(tmp)
+        self.length = break_len
         
 
     def enrich_text(self, style=None):
@@ -105,7 +111,8 @@ class TaskLine(object):
             rich_text = rich_text + "<font color=%s>%s</font> " % (
                 style['creation_date'], self.creation_date[5:]
             )
-        
+
+        # break line if content is too long
         rich_text = rich_text + self.content + ' '
 
         if self.projects:
@@ -140,7 +147,7 @@ class Tasks(object):
     
     def readFromFile(self):
         self.tasklines = []
-        with open(self.todotxt) as handle:
+        with open(self.todotxt, encoding='utf-8') as handle:
             for line in handle.readlines():
                 t = TaskLine()
                 t.parser(line)
@@ -148,7 +155,7 @@ class Tasks(object):
             
         
     def saveToFile(self):
-        with open(self.todotxt,  'w') as handle:
+        with open(self.todotxt, 'w', encoding='utf-8') as handle:
             writelines = [t.plain_text + '\n' for t in self.tasklines]
             handle.writelines(writelines)
         print('save todo.txt')

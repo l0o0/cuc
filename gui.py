@@ -13,62 +13,12 @@ from PyQt5 import QtCore
 from task import Tasks, TaskLine
 
 
-
-class TableWidgetDragRows(QTableWidget):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        self.setDragEnabled(True)
-        self.setAcceptDrops(True)
-        self.viewport().setAcceptDrops(True)
-        self.setDragDropOverwriteMode(False)
-        self.setDropIndicatorShown(True)
-
-        self.setSelectionMode(QAbstractItemView.ExtendedSelection)
-        self.setSelectionBehavior(QAbstractItemView.SelectRows)
-        self.setDragDropMode(QAbstractItemView.InternalMove)
-
-
-
-    def dropEvent(self, event: QDropEvent):
-        if not event.isAccepted() and event.source() == self:
-            drop_row = self.drop_on(event)
-
-            rows = sorted(set(item.row() for item in self.selectedItems()))
-            rows_to_move = [[QTableWidgetItem(self.item(row_index, column_index)) for column_index in range(self.columnCount())]
-                            for row_index in rows]
-            for row_index in reversed(rows):
-                self.removeRow(row_index)
-                if row_index < drop_row:
-                    drop_row -= 1
-
-            for row_index, data in enumerate(rows_to_move):
-                row_index += drop_row
-                self.insertRow(row_index)
-                for column_index, column_data in enumerate(data):
-                    self.setItem(row_index, column_index, column_data)
-            event.accept()
-            for row_index in range(len(rows_to_move)):
-                self.item(drop_row + row_index, 0).setSelected(True)
-                self.item(drop_row + row_index, 1).setSelected(True)
-        super().dropEvent(event)
-
-    def drop_on(self, event):
-        index = self.indexAt(event.pos())
-        if not index.isValid():
-            return self.rowCount()
-        return index.row() + 1 if self.is_below(event.pos(), index) else index.row()
-
-
-    def is_below(self, pos, index):
-        rect = self.visualRect(index)
-        margin = 2
-        if pos.y() - rect.top() < margin:
-            return False
-        elif rect.bottom() - pos.y() < margin:
-            return True
-        # noinspection PyTypeChecker
-        return rect.contains(pos, True) and not (int(self.model().flags(index)) & QtCore.Qt.ItemIsDropEnabled) and pos.y() >= rect.center().y()
+# init global variable TASKS
+global TASKS
+config = {'todotxt':'todo.txt',
+            'donetxt':'done.txt'}
+TASKS = Tasks(config['todotxt'], config['donetxt'])
+TASKS.readFromFile()
 
 
 
@@ -78,36 +28,35 @@ class HiddenLabel(QLabel):
     '''
     def __init__(self, buddy, taskline, parent = None):
         super(HiddenLabel, self).__init__(parent)
-        self.setFixedHeight(25)
+        #self.setFixedHeight(50)
         self.buddy = buddy
         self.taskline = taskline
 
-    # When it's clicked, hide itself and show its buddy
-    #def mousePressEvent(self, event):
-    #    # left click to edit 
-    #    if event.button() == QtCore.Qt.LeftButton:
-    #        self.hide()
-    #        self.buddy.setText(self.taskline.plain_text)
-    #        self.buddy.show()
-    #        self.buddy.setFocus() # Set focus on buddy so user doesn't have to click again
-#
+    # left double clicked to edit
+    def mouseDoubleClickEvent(self, event):
+        if event.button() == QtCore.Qt.LeftButton:
+            self.hide()
+            self.buddy.setText(self.taskline.plain_text)
+            self.buddy.show()
+            self.buddy.setFocus()
+
 
 
 class EditableCell(QWidget):
     '''
     QLineEdit show when HiddenLabel is hidden
     '''
-    def __init__(self, taskline, parent = None):
+    def __init__(self, rowidx, parent = None):
         super(EditableCell, self).__init__(parent)
-        self.taskline = taskline
+        self.rowidx = rowidx
         # Create ui
         self.myEdit = QLineEdit()
-        self.myEdit.setFixedHeight(25)
+        #self.myEdit.setFixedHeight(50)
         self.myEdit.hide() # Hide line edit
         self.myEdit.returnPressed.connect(self.textEdited)
         # Create our custom label, and assign myEdit as its buddy
-        self.myLabel = HiddenLabel(self.myEdit, self.taskline) 
-        self.myLabel.setText(self.taskline.enrich_text())
+        self.myLabel = HiddenLabel(self.myEdit, TASKS.tasklines[self.rowidx]) 
+        self.myLabel.setText(TASKS.tasklines[self.rowidx].enrich_text())
 
         # Put them under a layout together
         hLayout = QHBoxLayout()
@@ -116,13 +65,15 @@ class EditableCell(QWidget):
         hLayout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(hLayout)
 
+
     def textEdited(self):
         # If the input is left empty, revert back to the label showing
         print('edit finished')
         print(self.myEdit.text())
         taskline = TaskLine()
         taskline.parser(self.myEdit.text())
-        self.taskline = taskline
+        TASKS.tasklines[self.rowidx] = taskline
+        print(TASKS[self.rowidx].plain_text)
         self.myLabel.setText(taskline.enrich_text())
         self.myEdit.hide()
         self.myLabel.show()
@@ -132,28 +83,18 @@ class EditableCell(QWidget):
 
 class App(QWidget):
 
-    def __init__(self, config):
+    def __init__(self):
         super().__init__()
-        self.config = config
         self.title = 'Keep Going'
         self.left = 10
         self.top = 10
         self.width = 480
         self.height = 360
-        self.initTask()
         self.initUI()
         self.tab1()
         self.tab2()
         self.tab3()
         self.initTab()
-
-
-    def initTask(self):
-        self.tasks = Tasks(config['todotxt'], config['donetxt'])
-        self.tasks.readFromFile()
-        for i in self.tasks.tasklines:
-            print(i.plain_text)
-        print('-'*20)
 
         
     def initUI(self):
@@ -187,7 +128,6 @@ class App(QWidget):
         # add tabs to widget
         self.layout.addWidget(self.tabs)
         self.setLayout(self.layout)
-        #print('tabs', self.tabs.geometry())
 
         # tab1 
     def tab1(self):
@@ -207,15 +147,14 @@ class App(QWidget):
         self.tab1TaskTable = QTableWidget()
         self.tab1TaskTable.verticalHeader().setVisible(False)
         self.tab1TaskTable.horizontalHeader().setVisible(False)
-        #self.tab1TaskTable.setShowGrid(False)
+        self.tab1TaskTable.setShowGrid(False)
         self.tab1TaskTable.setColumnCount(3)
-        self.tab1TaskTable.setRowCount(len(self.tasks.tasklines))
+        self.tab1TaskTable.setRowCount(len(TASKS.tasklines))
         self.tab1TaskTable.setColumnWidth(0, 380)
         self.tab1TaskTable.setColumnWidth(1, 20)
         self.tab1TaskTable.setColumnWidth(2, 20)
         self.tab1TaskTable.horizontalHeader().setSectionResizeMode(0, QHeaderView.Fixed)
         self.tab1.layout.addWidget(self.tab1TaskTable, 1, 0, 15, 13)
-        print(self.tab1TaskTable.geometry())
 
         # add widget for menu button
         self.tab1Pin = QPushButton()
@@ -230,9 +169,9 @@ class App(QWidget):
         self.tab1.layout.addWidget(self.tab1Pin,16, 9)
         self.tab1.layout.addWidget(self.tab1Menu,16, 10)
         # display tasks
-        for i, t in enumerate(self.tasks.tasklines):
+        for i, t in enumerate(TASKS.tasklines):
             print('init row %s' % i)
-            cellwidget = self.createCellQlabel(t)
+            cellwidget = self.createCellQlabel(TASKS.tasklines, i)
             self.tab1TaskTable.setCellWidget(i, 0, cellwidget)
             editButton = self.createButton('edit')
             deleteButton = self.createButton('delete')            
@@ -260,18 +199,17 @@ class App(QWidget):
         self.tab3.layout.addWidget(lb)
         self.tab3.setLayout(self.tab3.layout)
 
-
-        
+    # hide to system tray instead of close
     def closeEvent(self, event):
         event.ignore()
         self.hide()
 
-
+    # display window in the right bottom
     def rightBottomShow(self):
         self.setGeometry(*self.fixedGeometry)
         self.show()
     
-
+    # create button in taskline
     def createButton(self, t):
         self.butt = QPushButton()
         self.butt.setMaximumSize(25, 25)
@@ -279,16 +217,17 @@ class App(QWidget):
             self.butt.setIcon(QIcon("icons/cancel-circle.png"))      
             self.butt.clicked.connect(self.deleteButtonAction)     
         elif t == 'edit':
-            self.butt.setIcon(QIcon("icons/pen.png"))
+            self.butt.setIcon(QIcon("icons/checkmark.png"))
             self.butt.clicked.connect(self.editButtonAction)
         return self.butt
 
-
-    def createCellQlabel(self, taskline):
-        cellwidget = EditableCell(taskline) 
+    # create editable cell
+    def createCellQlabel(self, tasklines, rowidx):
+        cellwidget = EditableCell(rowidx) 
         return cellwidget       
 
 
+    @QtCore.pyqtSlot()
     def addLine(self):
         #QMessageBox.information(self, "Info", "Enter Pressed.")
         print('total rows before', self.tab1TaskTable.rowCount())
@@ -306,7 +245,7 @@ class App(QWidget):
             self.tab1TaskTable.setCellWidget(rowidx, 1, editButton)
             self.tab1TaskTable.setCellWidget(rowidx, 2, deleteButton)
             self.textboxAdd.clear()
-            self.tasks.tasklines.insert(0, taskline)
+            TASKS.tasklines.insert(0, taskline)
         print('total rows after', self.tab1TaskTable.rowCount())
 
 
@@ -321,11 +260,12 @@ class App(QWidget):
             self.editcellwidget.myEdit.show()
             self.editcellwidget.myEdit.setFocus()
             self.editcellwidget.myEdit.returnPressed.connect(self.editButtonAction2) 
-            self.tasks.tasklines[row] = self.editcellwidget.taskline
+            TASKS.tasklines[row] = self.editcellwidget.taskline
             self.tab1TaskTable.setCellWidget(row, 0, self.editcellwidget)
-            print('edit ', row, self.tasks.tasklines[row].plain_text)
+            print('edit ', row, TASKS.tasklines[row].plain_text)
 
 
+    @QtCore.pyqtSlot()
     def editButtonAction2(self):
         # If the input is left empty, revert back to the label showing
         print('edit finished2')
@@ -346,7 +286,7 @@ class App(QWidget):
             row = self.tab1TaskTable.indexAt(button.pos()).row()
             #column = self.tab1TaskTable.column(button)
             self.tab1TaskTable.removeRow(row)
-            del self.tasks.tasklines[row]
+            del TASKS.tasklines[row]
         print('delete', row)
 
 
@@ -381,7 +321,7 @@ class SystemTrayIcon(QSystemTrayIcon):
 
 
     def exit(self):
-        self.parent.tasks.saveToFile()
+        TASKS.saveToFile()
         QtCore.QCoreApplication.exit()        
 
 
@@ -397,10 +337,8 @@ class SystemTrayIcon(QSystemTrayIcon):
 
 
 if __name__ == '__main__':
-    config = {'todotxt':'todo.txt',
-                'donetxt':'done.txt'}
     app = QApplication(sys.argv)
-    ex = App(config)
+    ex = App()
     trayIcon = SystemTrayIcon(QIcon("icons/icon.png"), ex)
     trayIcon.show()
     sys.exit(app.exec_())
