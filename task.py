@@ -138,6 +138,34 @@ class TaskLine(object):
         return rich_text
 
 
+    def format_text(self):
+        text = "%s%s %s %s %s" % (
+            self.mask if self.mask else "", 
+            self.priority if self.priority else "", 
+            self.completion_date if self.completion_date else "", 
+            self.creation_date if self.creation_date else "", 
+            self.content
+            )
+        print(text.strip())
+        text = re.sub('\s{2,}', ' ', text.strip())
+        
+        if self.projects:
+            for i in range(len(self.projects)):
+                p = self.projects[i]
+                text = text + " " + p
+
+        if self.contexts:
+            for i in range(len(self.contexts)):
+                p = self.contexts[i]
+                text = text + " " + p
+        
+        if self.keyvalues:
+            for i in range(len(self.keyvalues)):
+                k, v = self.keyvalues[i].split(':')
+                text = text + " " + k + ':' + v
+        return text
+
+
 
 class Tasks(object):
     def __init__(self, todotxt, donetxt):
@@ -159,6 +187,13 @@ class Tasks(object):
             writelines = [t.plain_text + '\n' for t in self.tasklines]
             handle.writelines(writelines)
         print('save todo.txt')
+
+
+    def saveDoneTask(self, taskline):
+        with open(self.donetxt, 'a', encoding='utf-8') as handle:
+            text = taskline.format_text()
+            text += '\n'
+            handle.write(text)
 
     
     def taskSort(self, bypart):
