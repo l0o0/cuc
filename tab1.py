@@ -93,18 +93,6 @@ class TAB1(QtWidgets.QWidget):
         self.tab1TaskTable.horizontalHeader().setSectionResizeMode(0, QtWidgets.QHeaderView.Fixed)
         self.layout.addWidget(self.tab1TaskTable, 1, 0, 15, 13)
 
-        # add widget for menu button
-        # self.tab1Pin = QtWidgets.QPushButton()
-        # self.tab1Pin.setMaximumSize(30, 30)
-        # self.tab1Pin.setCheckable(True)
-        # self.tab1Pin.setIcon(QtGui.QIcon("icons/pinterest2.png"))
-        # self.tab1Pin.clicked.connect(self.winPinTop)
-        # self.tab1Menu = QPushButton()
-        # self.tab1Menu.setMaximumSize(30, 30)
-        # self.tab1Menu.setChecked(True)
-        # self.tab1Menu.setIcon(QtGui.QIcon("icons/cog.png"))
-        # self.layout.addWidget(self.tab1Pin,16, 9)
-        # self.layout.addWidget(self.tab1Menu,16, 10)
         # display tasks
         for i, t in enumerate(self.tasks.tasklines):
             print('init row %s' % i)

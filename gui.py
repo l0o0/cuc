@@ -72,10 +72,25 @@ class App(QWidget):
         self.tabs.addTab(self.tab1, "TODO")
         self.tabs.addTab(self.tab2, 'DONE')
         self.tabs.addTab(self.tab3, "Summary")
+        self.bottom = QHBoxLayout()
+        self.pinButton = QtWidgets.QPushButton()
+        self.menuButton = QtWidgets.QPushButton()
+        self.pinButton.setMaximumSize(30, 30)
+        self.pinButton.setCheckable(True)
+        self.pinButton.setIcon(QtGui.QIcon("icons/pinterest2.png"))
+        self.pinButton.clicked.connect(self.winPinTop)
+        self.menuButton = QPushButton()
+        self.menuButton.setMaximumSize(30, 30)
+        self.menuButton.setChecked(True)
+        self.menuButton.setIcon(QtGui.QIcon("icons/cog.png"))
+        self.bottom.addWidget(self.pinButton,alignment=QtCore.Qt.AlignRight)
+        self.bottom.addWidget(self.menuButton)
+        self.bottom.setContentsMargins(1, 1, 1, 1)
 
         # add tabs to widget
         self.layout.addWidget(self.tabs)
-        self.layout.setContentsMargins(2, 2, 2, 0)
+        self.layout.addLayout(self.bottom)
+        self.layout.setContentsMargins(0, 1, 0, 2)
         self.setLayout(self.layout)
 
         # tab1 
@@ -120,17 +135,17 @@ class App(QWidget):
     
     
 
-    # @QtCore.pyqtSlot()
-    # def winPinTop(self):
-    #     button = self.sender()
-    #     if button.isChecked():
-    #         print('on top')
-    #         self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint | QtCore.Qt.FramelessWindowHint | QtCore.Qt.Dialog)
-    #         self.rightBottomShow()
-    #     else:
-    #         print('no top')
-    #         self.setWindowFlags(QtCore.Qt.FramelessWindowHint)
-    #         self.rightBottomShow()
+    @QtCore.pyqtSlot()
+    def winPinTop(self):
+        button = self.sender()
+        if button.isChecked():
+            print('on top')
+            self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint | QtCore.Qt.FramelessWindowHint | QtCore.Qt.Dialog)
+            self.show()
+        else:
+            print('no top')
+            self.setWindowFlags(QtCore.Qt.FramelessWindowHint)
+            self.show()
 
 
 
