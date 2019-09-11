@@ -173,7 +173,6 @@ class TAB1(QtWidgets.QWidget):
             self.tab1TaskTable.removeRow(row)
             del self.tasks.tasklines[row]
 
-
     
     def deleteButtonAction(self):
         button = self.sender()
@@ -183,3 +182,7 @@ class TAB1(QtWidgets.QWidget):
             self.tab1TaskTable.removeRow(row)
             del self.tasks.tasklines[row]
         print('delete', row)
+
+
+    def testbutton(self):
+        print('press testbutton')

@@ -10,8 +10,22 @@ from PyQt5 import QtGui
 from PyQt5 import QtWidgets
 from PyQt5 import QtCore
 
+from pyqtkeybind import keybinder 
+
 from task import Tasks, TaskLine
 from tab1 import TAB1
+
+
+
+class WinEventFilter(QtCore.QAbstractNativeEventFilter):
+    def __init__(self, keybinder):
+        self.keybinder = keybinder
+        super().__init__()
+
+    def nativeEventFilter(self, eventType, message):
+        ret = self.keybinder.handler(eventType, message)
+        return ret, 0
+
 
 
 class App(QWidget):
@@ -28,6 +42,7 @@ class App(QWidget):
         self.tab2()
         self.tab3()
         self.initTab()
+        
 
         
     def initUI(self):
@@ -94,6 +109,14 @@ class App(QWidget):
     def rightBottomShow(self):
         self.setGeometry(*self.fixedGeometry)
         self.show()
+
+    
+    def shortcut(self):
+        print('press shortcut')
+        if self.isHidden():
+            self.rightBottomShow()
+        else:
+            self.hide()
     
     
 
@@ -153,4 +176,14 @@ if __name__ == '__main__':
     ex = App(tab1)
     trayIcon = SystemTrayIcon(QIcon("icons/icon.png"), ex)
     trayIcon.show()
+
+    # keybinder from here
+    keybinder.init()
+    win_event_filter = WinEventFilter(keybinder)
+    event_dispatcher = QtCore.QAbstractEventDispatcher.instance()
+    event_dispatcher.installNativeEventFilter(win_event_filter)
+    keybinder.register_hotkey(ex.winId(), "Shift+Ctrl+A", ex.shortcut)
+    keybinder.register_hotkey(tab1.winId(), "Shift+Ctrl+B", tab1.testbutton)
+
     sys.exit(app.exec_())
+    keybinder.unregister_hotkey(ex.winId(), "Shift+Ctrl+A")
