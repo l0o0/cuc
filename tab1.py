@@ -2,6 +2,9 @@ from datetime import datetime
 from PyQt5 import QtWidgets, QtCore, QtGui 
 from task import TaskLine
 
+import time
+
+
 
 class HiddenLabel(QtWidgets.QLabel):
     '''
@@ -25,16 +28,38 @@ class HiddenLabel(QtWidgets.QLabel):
 
 
 
+class HiddenButton(QtWidgets.QPushButton):
+    def __init__(self):
+        super().__init__()
+        self.op = QtWidgets.QGraphicsOpacityEffect()
+        self.op.setOpacity(0)
+        self.setGraphicsEffect(self.op)
+    
+    def enterEvent(self, QEvent):
+        print('Enter')
+        time.sleep(0.25)
+        self.op.setOpacity(1)
+        self.setGraphicsEffect(self.op)
+    
+    def leaveEvent(self, QEvent):
+        print('leave')
+        time.sleep(0.25)
+        self.op.setOpacity(0)
+        self.setGraphicsEffect(self.op)
+        
+
+
+
 class EditableCell(QtWidgets.QWidget):
     '''
     QLineEdit show when HiddenLabel is hidden
     '''
-    def __init__(self, taskline, parent = None):
+    def __init__(self, idx, parent = None):
         super().__init__()
-        self.taskline = taskline
+        self.parent = parent
+        self.taskline = self.parent.tasks.tasklines[idx]
         # Create ui
         self.myEdit = QtWidgets.QLineEdit()
-        #self.myEdit.setFixedHeight(50)
         self.myEdit.hide() # Hide line edit
         self.myEdit.returnPressed.connect(self.textEdited)
         # Create our custom label, and assign myEdit as its buddy
@@ -51,13 +76,14 @@ class EditableCell(QtWidgets.QWidget):
 
     def textEdited(self):
         # If the input is left empty, revert back to the label showing
-        print('edit finished', self.myEdit.text())
-        taskline = TaskLine()
-        taskline.parser(self.myEdit.text())
-        self.taskline = taskline
-        print(self.taskline.plain_text)
+        row = self.parent.tab1TaskTable.indexAt(self.pos()).row()
+        print('edit finished', self.myEdit.text(), ' row:', row)
+        self.taskline = TaskLine()
+        self.taskline.parser(self.myEdit.text())
+        self.parent.tasks.tasklines[row] = self.taskline
+        print('edited plain text', self.taskline.plain_text)
         # update text after saving
-        self.myLabel.setText(taskline.enrich_text())
+        self.myLabel.setText(self.taskline.enrich_text())
         self.myLabel.taskline = self.taskline
         self.myEdit.hide()
         self.myLabel.show()
@@ -82,6 +108,7 @@ class TAB1(QtWidgets.QWidget):
 
         # add layout for added tasks
         self.tab1TaskTable = QtWidgets.QTableWidget()
+        self.tab1TaskTable.setStyleSheet("selection-background-color: #f4f6f6")
         self.tab1TaskTable.verticalHeader().setVisible(False)
         self.tab1TaskTable.horizontalHeader().setVisible(False)
         self.tab1TaskTable.setShowGrid(False)
@@ -96,12 +123,13 @@ class TAB1(QtWidgets.QWidget):
         # display tasks
         for i, t in enumerate(self.tasks.tasklines):
             print('init row %s' % i)
-            cellwidget = self.createCellQlabel(t)
+            cellwidget = self.createCellQlabel(i, self)
             self.tab1TaskTable.setCellWidget(i, 0, cellwidget)
             editButton = self.createButton('checkmark')
             deleteButton = self.createButton('delete')            
             self.tab1TaskTable.setCellWidget(i,1, editButton)
             self.tab1TaskTable.setCellWidget(i,2, deleteButton)
+            self.tab1TaskTable.cellWidget(i, 1).setHidden(True)
         print('init table rows ', self.tab1TaskTable.rowCount())
         self.layout.setContentsMargins(3,3,3,0)
         self.setLayout(self.layout)
@@ -121,8 +149,8 @@ class TAB1(QtWidgets.QWidget):
 
 
     # create editable cell
-    def createCellQlabel(self, taskline):
-        cellwidget = EditableCell(taskline) 
+    def createCellQlabel(self, idx, parent):
+        cellwidget = EditableCell(idx, parent) 
         return cellwidget       
 
 
@@ -155,8 +183,8 @@ class TAB1(QtWidgets.QWidget):
             completion_date = datetime.now().strftime('%Y-%m-%d')
             self.checkcellwidget.taskline.completion_date = completion_date
             self.checkcellwidget.taskline.mask = 'x'
-            print(self.checkcellwidget.taskline.format_text())
-            print('check ', row, self.tasks.tasklines[row].plain_text)
+            print('check format text', row, self.checkcellwidget.taskline.format_text())
+            print('check plain text', row, self.tasks.tasklines[row].plain_text)
             self.tasks.saveDoneTask(self.checkcellwidget.taskline)
             self.tab1TaskTable.removeRow(row)
             del self.tasks.tasklines[row]
