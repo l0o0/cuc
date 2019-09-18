@@ -1,5 +1,6 @@
 import re
-    
+from datetime import datetime
+
 
 
 class TaskLine(object):
@@ -25,10 +26,10 @@ class TaskLine(object):
                                 '(D)' : '#1E90FF'
                             },
                             'completion_date':'#B22222',
-                            'creation_date':'#8B0000',
+                            'creation_date':'green',
                             'content':'black',
-                            'project':'#FFDEAD',
-                            'context':'#98FB98',
+                            'project':'#e74c3c',
+                            'context':'#3498db',
                             'keyvalue':{
                                 'k':'#800080',
                                 'v':'#800080'
@@ -51,23 +52,20 @@ class TaskLine(object):
         self.priority = self.re_priority.search(self.plain_text)
         if self.priority:
             self.priority = self.priority.groups()[0] 
-            break_len = break_len + 1 + len(self.priority)
         else:
             self.priority = None 
 
         # handle dates
         self.dates = self.re_dates.findall(self.plain_text)
         if len(self.dates) == 2:
-            self.completion_date = self.dates[0]
-            self.creation_date = self.dates[1]
-            break_len = break_len + len(self.completion_date) + len(self.creation_date) + 2
+            self.completion_date = datetime.strptime(self.dates[0], '%Y-%m-%d')
+            self.creation_date = datetime.strptime(self.dates[1], '%Y-%m-%d')
         elif len(self.dates) == 1:
             self.completion_date = None
-            self.creation_date = self.dates[0]
-            break_len = break_len + len(self.creation_date) + 1
+            self.creation_date = datetime.strptime(self.dates[0], '%Y-%m-%d')
         else:
             self.completion_date = None 
-            self.creation_date = None 
+            self.creation_date = None
 
         # handle projects 
         self.projects = self.re_projects.findall(self.plain_text)
@@ -91,8 +89,6 @@ class TaskLine(object):
         tmp = self.re_contexts.sub('', tmp)
         tmp = self.re_keyvalues.sub('', tmp)
         self.content = tmp 
-        break_len = break_len + len(tmp)
-        self.length = break_len
         
 
     def enrich_text(self, style=None):
@@ -104,13 +100,24 @@ class TaskLine(object):
                 style['priority'][self.priority], self.priority
                 )
         if self.completion_date:
-            rich_text = rich_text + "<font color=%s>%s</font> " % (
-                style['completion_date'], self.completion_date[5:]
-            )
+            if self.completion_date.year == datetime.now().year:
+                rich_text = rich_text + "<font color=%s>%s</font> " % (
+                    style['completion_date'], datetime.strftime(self.completion_date, '%Y-%m-%d')[5:]
+                )
+            else:
+                rich_text = rich_text + "<font color=%s>%s</font> " % (
+                    style['completion_date'], datetime.strftime(self.completion_date, '%Y-%m-%d')
+                )
+
         if self.creation_date:
-            rich_text = rich_text + "<font color=%s>%s</font> " % (
-                style['creation_date'], self.creation_date[5:]
-            )
+            if self.creation_date.year == datetime.now().year:
+                rich_text = rich_text + "<font color=%s>%s</font> " % (
+                    style['creation_date'], datetime.strftime(self.creation_date, '%Y-%m-%d')[5:]
+                )
+            else:
+                rich_text = rich_text + "<font color=%s>%s</font> " % (
+                    style['creation_date'], datetime.strftime(self.creation_date, '%Y-%m-%d')
+                )
 
         # break line if content is too long
         rich_text = rich_text + self.content + ' '
@@ -142,11 +149,11 @@ class TaskLine(object):
         text = "%s%s %s %s %s" % (
             self.mask if self.mask else "", 
             self.priority if self.priority else "", 
-            self.completion_date if self.completion_date else "", 
-            self.creation_date if self.creation_date else "", 
+            datetime.strftime(self.completion_date, '%Y-%m-%d') if self.completion_date else "", 
+            datetime.strftime(self.creation_date, '%Y-%m-%d') if self.creation_date else "", 
             self.content
             )
-        print(text.strip())
+
         text = re.sub('\s{2,}', ' ', text.strip())
         
         if self.projects:
@@ -183,16 +190,17 @@ class Tasks(object):
             
         
     def saveToFile(self):
-        with open(self.todotxt, 'w', encoding='utf-8') as handle:
-            writelines = [t.plain_text + '\n' for t in self.tasklines]
+        writelines = [t.format_text() + '\n' for t in self.tasklines]
+        print('all lines to write', writelines)       
+        with open(self.todotxt, 'w', encoding='utf-8') as handle:          
             handle.writelines(writelines)
         print('save todo.txt')
 
 
     def saveDoneTask(self, taskline):
+        text = taskline.format_text()
+        text += '\n'
         with open(self.donetxt, 'a', encoding='utf-8') as handle:
-            text = taskline.format_text()
-            text += '\n'
             handle.write(text)
 
     
@@ -206,9 +214,9 @@ if __name__ == '__main__':
     s = '(A) 2019-09-01 2019-08-31 call kitty @phone +project1 +project2 due:test'
     s1 = 'x(A) 2019-09-01 2019-08-31 call kitty @phone +pro1 +pro1 due:test @try'
 
-    t1 = TaskLines()
+    t1 = TaskLine()
     t1.parser(s)
-    t2 = TaskLines()
+    t2 = TaskLine()
     t2.parser(s1)
 
     print(s)
