@@ -35,7 +35,7 @@ class App(QWidget):
         self.title = 'Keep Going'
         self.left = 10
         self.top = 10
-        self.width = 480
+        self.width = 450
         self.height = 360
         self.initUI()
         self.tab1 = tab1
@@ -51,7 +51,7 @@ class App(QWidget):
         # 设置窗口固定大小
         self.setFixedSize(self.width, self.height)
         # 设置窗体无边框
-        self.setWindowFlags(QtCore.Qt.FramelessWindowHint)
+        self.setWindowFlags(QtCore.Qt.FramelessWindowHint | QtCore.Qt.Tool)
         # 设置透明背景
         #self.setWindowOpacity(0.85)
 
@@ -140,12 +140,12 @@ class App(QWidget):
         button = self.sender()
         if button.isChecked():
             print('on top')
-            self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint | QtCore.Qt.FramelessWindowHint | QtCore.Qt.Dialog)
-            self.show()
+            self.setWindowFlags(QtCore.Qt.FramelessWindowHint | QtCore.Qt.WindowStaysOnTopHint| QtCore.Qt.Tool)
+            self.rightBottomShow()
         else:
             print('no top')
-            self.setWindowFlags(QtCore.Qt.FramelessWindowHint)
-            self.show()
+            self.setWindowFlags(QtCore.Qt.FramelessWindowHint |QtCore.Qt.Tool)
+            self.rightBottomShow()
 
 
 
@@ -202,3 +202,5 @@ if __name__ == '__main__':
 
     sys.exit(app.exec_())
     keybinder.unregister_hotkey(ex.winId(), "Shift+Ctrl+A")
+
+
