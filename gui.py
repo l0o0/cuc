@@ -51,7 +51,7 @@ class App(QWidget):
         # 设置窗口固定大小
         self.setFixedSize(self.width, self.height)
         # 设置窗体无边框
-        self.setWindowFlags(QtCore.Qt.FramelessWindowHint | QtCore.Qt.Tool)
+        self.setWindowFlags(QtCore.Qt.Tool | QtCore.Qt.FramelessWindowHint)
         # 设置透明背景
         #self.setWindowOpacity(0.85)
 
@@ -124,15 +124,6 @@ class App(QWidget):
     def rightBottomShow(self):
         self.setGeometry(*self.fixedGeometry)
         self.show()
-
-    
-    def shortcut(self):
-        print('press shortcut')
-        if self.isHidden():
-            self.rightBottomShow()
-        else:
-            self.hide()
-    
     
 
     @QtCore.pyqtSlot()
@@ -151,8 +142,15 @@ class App(QWidget):
 
 class SystemTrayIcon(QSystemTrayIcon):
 
-    def __init__(self, icon, parent=None):
+    def __init__(self, parent=None):
+        # init icon by taskline number
+        idx = len(parent.tab1.tasks.tasklines) // 5 + 1
+        if idx > 4:
+            idx = 4
+        icon_png = "icons/icon%s.png" % idx
+        icon = QIcon(icon_png)
         QSystemTrayIcon.__init__(self, icon, parent)
+
         self.parent = parent
         menu = QMenu(parent)
         showAction = menu.addAction('Show')
@@ -162,6 +160,18 @@ class SystemTrayIcon(QSystemTrayIcon):
         exitAction.triggered.connect(self.exit)      
         self.setContextMenu(menu)
         self.activated.connect(self.onTrayIconActivated)
+
+
+    def updateIcon(self):
+        idx = len(self.parent.tab1.tasks.tasklines) // 5 + 1
+        if idx > 4:
+            idx = 4 
+
+        if self.parent.isHidden():
+            self.setIcon(QIcon(QPixmap('icons/icon0.png')))
+        elif self.parent.isVisible():
+            icon_png = "icons/icon%s.png" % idx
+            self.setIcon(QIcon(QPixmap(icon_png)))
 
 
     def exit(self):
@@ -175,8 +185,20 @@ class SystemTrayIcon(QSystemTrayIcon):
             #print(self.parent.frameGeometry(), self.parent.normalGeometry(), ag, sg)
             if self.parent.isHidden():
                 self.parent.rightBottomShow()
+                self.updateIcon()
             else:
                 self.parent.hide()
+                self.updateIcon()
+
+
+    def shortcut(self):
+        print('press shortcut')
+        if self.parent.isHidden():
+            self.parent.rightBottomShow()
+            self.updateIcon()
+        else:
+            self.parent.hide()
+            self.updateIcon()
 
 
 
@@ -189,7 +211,7 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
     tab1 = TAB1(tasks)
     ex = App(tab1)
-    trayIcon = SystemTrayIcon(QIcon("icons/icon.png"), ex)
+    trayIcon = SystemTrayIcon(ex)
     trayIcon.show()
 
     # keybinder from here
@@ -197,7 +219,7 @@ if __name__ == '__main__':
     win_event_filter = WinEventFilter(keybinder)
     event_dispatcher = QtCore.QAbstractEventDispatcher.instance()
     event_dispatcher.installNativeEventFilter(win_event_filter)
-    keybinder.register_hotkey(ex.winId(), "Shift+Ctrl+A", ex.shortcut)
+    keybinder.register_hotkey(ex.winId(), "Shift+Ctrl+A", trayIcon.shortcut)
     keybinder.register_hotkey(tab1.winId(), "Shift+Ctrl+B", tab1.testbutton)
 
     sys.exit(app.exec_())

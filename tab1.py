@@ -164,14 +164,14 @@ class TAB1(QtWidgets.QWidget):
             self.tab1TaskTable.insertRow(rowidx)
             taskline = TaskLine()
             taskline.parser(self.textboxAdd.text())
-            cellwidget = self.createCellQlabel(taskline)
+            self.tasks.tasklines.insert(0, taskline)
+            cellwidget = self.createCellQlabel(rowidx, self)
             self.tab1TaskTable.setCellWidget(rowidx, 0, cellwidget)
             editButton = self.createButton('checkmark')
             deleteButton = self.createButton('delete')
             self.tab1TaskTable.setCellWidget(rowidx, 1, editButton)
             self.tab1TaskTable.setCellWidget(rowidx, 2, deleteButton)
-            self.textboxAdd.clear()
-            self.tasks.tasklines.insert(0, taskline)
+            self.textboxAdd.clear()           
         print('total rows after', self.tab1TaskTable.rowCount())
 
 
