@@ -149,7 +149,6 @@ class TaskLine(object):
 
 
     def format_text(self):
-        print(self.completion_date)
         text = "%s%s %s %s %s" % (
             self.mask if self.mask else "", 
             self.priority if self.priority else "", 

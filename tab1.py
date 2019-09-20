@@ -92,8 +92,9 @@ class EditableCell(QtWidgets.QWidget):
 
 
 class TAB1(QtWidgets.QWidget):
-    def __init__(self, tasks):
-        super().__init__()
+    trigger = QtCore.pyqtSignal()
+    def __init__(self, tasks, parent=None):
+        super(TAB1, self).__init__(parent)
         self.tasks = tasks
         self.layout = QtWidgets.QGridLayout()
         self.layout.setVerticalSpacing(2)
@@ -119,6 +120,10 @@ class TAB1(QtWidgets.QWidget):
         self.tab1TaskTable.setColumnWidth(2, 20)
         self.tab1TaskTable.horizontalHeader().setSectionResizeMode(0, QtWidgets.QHeaderView.Fixed)
         self.layout.addWidget(self.tab1TaskTable, 1, 0, 15, 13)
+
+        # signal and slot
+        # update tray icon by taskline number 
+        self.trigger.connect(self.parent().tray_icon.updateIcon)
 
         # display tasks
         for i, t in enumerate(self.tasks.tasklines):
@@ -173,6 +178,8 @@ class TAB1(QtWidgets.QWidget):
             self.tab1TaskTable.setCellWidget(rowidx, 2, deleteButton)
             self.textboxAdd.clear()           
         print('total rows after', self.tab1TaskTable.rowCount())
+        # send signal to update tray icon
+        self.trigger.emit()
 
 
     def checkButtonAction(self):
@@ -198,6 +205,8 @@ class TAB1(QtWidgets.QWidget):
             self.tab1TaskTable.removeRow(row)
             del self.tasks.tasklines[row]
         print('delete', row)
+        # send signal to update tray icon
+        self.trigger.emit()
 
 
     def testbutton(self):

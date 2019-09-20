@@ -30,24 +30,33 @@ class WinEventFilter(QtCore.QAbstractNativeEventFilter):
 
 class App(QWidget):
 
-    def __init__(self, tab1):
+    def __init__(self):
         super().__init__()
-        self.title = 'Keep Going'
         self.left = 10
         self.top = 10
-        self.width = 450
+        self.width = 460
         self.height = 360
         self.initUI()
-        self.tab1 = tab1
+        # read configure file
+        config = {'todotxt':'todo.txt',
+            'donetxt':'done.txt'}
+        # create tasks by reading files in configure file
+        tasks = Tasks(config['todotxt'], config['donetxt'])
+        tasks.readFromFile()
+        tasks.taskSort()
+        # create tray icon 
+        self.initTrayIcon(tasks.tasklines)
+        # create tab1,  parent is APP
+        self.tab1 = TAB1(tasks, self)
         self.tab2()
         self.tab3()
         self.initTab()
-        
 
+        # self.A = A(self)
+        # self.A.count()
+        
         
     def initUI(self):
-        
-        self.setWindowTitle(self.title)
         # 设置窗口固定大小
         self.setFixedSize(self.width, self.height)
         # 设置窗体无边框
@@ -64,11 +73,16 @@ class App(QWidget):
         self.show()
 
 
+    def initTrayIcon(self, init_tasklines):
+        self.tray_icon = SystemTrayIcon(init_tasklines, self)
+        self.tray_icon.show()
+
+
     def initTab(self):
         # init tab 
         self.layout = QVBoxLayout()
         self.tabs = QTabWidget()       
-        self.tabs.resize(478, 358)
+        self.tabs.resize(458, 358)
         self.tabs.addTab(self.tab1, "TODO")
         self.tabs.addTab(self.tab2, 'DONE')
         self.tabs.addTab(self.tab3, "Summary")
@@ -142,19 +156,24 @@ class App(QWidget):
 
 class SystemTrayIcon(QSystemTrayIcon):
 
-    def __init__(self, parent=None):
+    def __init__(self, init_tasklines, parent=None):
+        '''
+        init_tasklines, tasklines parsed from todo.txt, set icon
+        according taskline number.
+        parent is class App
+        '''
+        super(SystemTrayIcon, self).__init__(parent)
         # init icon by taskline number
-        idx = len(parent.tab1.tasks.tasklines) // 5 + 1
+        idx = len(init_tasklines) // 5 + 1
         if idx > 4:
             idx = 4
         icon_png = "icons/icon%s.png" % idx
         icon = QIcon(icon_png)
         QSystemTrayIcon.__init__(self, icon, parent)
-
-        self.parent = parent
+        
         menu = QMenu(parent)
         showAction = menu.addAction('Show')
-        showAction.triggered.connect(parent.rightBottomShow)
+        showAction.triggered.connect(self.parent().rightBottomShow)
         menu.addSeparator()
         exitAction = menu.addAction('Exit')
         exitAction.triggered.connect(self.exit)      
@@ -163,19 +182,19 @@ class SystemTrayIcon(QSystemTrayIcon):
 
 
     def updateIcon(self):
-        idx = len(self.parent.tab1.tasks.tasklines) // 5 + 1
+        idx = len(self.parent().tab1.tasks.tasklines) // 5 + 1
         if idx > 4:
             idx = 4 
 
-        if self.parent.isHidden():
+        if self.parent().isHidden():
             self.setIcon(QIcon(QPixmap('icons/icon0.png')))
-        elif self.parent.isVisible():
+        elif self.parent().isVisible():
             icon_png = "icons/icon%s.png" % idx
             self.setIcon(QIcon(QPixmap(icon_png)))
 
 
     def exit(self):
-        self.parent.tab1.tasks.saveToFile()
+        self.parent().tab1.tasks.saveToFile()
         QtCore.QCoreApplication.exit()        
 
 
@@ -183,47 +202,39 @@ class SystemTrayIcon(QSystemTrayIcon):
         #print(reason, '--reason--')
         if reason == QSystemTrayIcon.Trigger:
             #print(self.parent.frameGeometry(), self.parent.normalGeometry(), ag, sg)
-            if self.parent.isHidden():
-                self.parent.rightBottomShow()
+            if self.parent().isHidden():
+                self.parent().rightBottomShow()
                 self.updateIcon()
             else:
-                self.parent.hide()
+                self.parent().hide()
                 self.updateIcon()
 
 
     def shortcut(self):
         print('press shortcut')
-        if self.parent.isHidden():
-            self.parent.rightBottomShow()
+        if self.parent().isHidden():
+            self.parent().rightBottomShow()
             self.updateIcon()
         else:
-            self.parent.hide()
+            self.parent().hide()
             self.updateIcon()
 
 
 
 if __name__ == '__main__':
-    config = {'todotxt':'todo.txt',
-            'donetxt':'done.txt'}
-    tasks = Tasks(config['todotxt'], config['donetxt'])
-    tasks.readFromFile()
-    tasks.taskSort()
-
     app = QApplication(sys.argv)
-    tab1 = TAB1(tasks)
-    ex = App(tab1)
-    trayIcon = SystemTrayIcon(ex)
-    trayIcon.show()
+    ex = App()
+    
 
     # keybinder from here
-    keybinder.init()
-    win_event_filter = WinEventFilter(keybinder)
-    event_dispatcher = QtCore.QAbstractEventDispatcher.instance()
-    event_dispatcher.installNativeEventFilter(win_event_filter)
-    keybinder.register_hotkey(ex.winId(), "Shift+Ctrl+A", trayIcon.shortcut)
-    keybinder.register_hotkey(tab1.winId(), "Shift+Ctrl+B", tab1.testbutton)
+    # keybinder.init()
+    # win_event_filter = WinEventFilter(keybinder)
+    # event_dispatcher = QtCore.QAbstractEventDispatcher.instance()
+    # event_dispatcher.installNativeEventFilter(win_event_filter)
+    # keybinder.register_hotkey(ex.winId(), "Shift+Ctrl+A", trayIcon.shortcut)
+    # keybinder.register_hotkey(tab1.winId(), "Shift+Ctrl+B", tab1.testbutton)
 
     sys.exit(app.exec_())
-    keybinder.unregister_hotkey(ex.winId(), "Shift+Ctrl+A")
+    # keybinder.unregister_hotkey(ex.winId(), "Shift+Ctrl+A")
 
 
