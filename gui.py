@@ -62,7 +62,8 @@ class App(QWidget):
         # 设置窗体无边框
         self.setWindowFlags(QtCore.Qt.Tool | QtCore.Qt.FramelessWindowHint)
         # 设置透明背景
-        #self.setWindowOpacity(0.85)
+        self.setWindowOpacity(0.95)
+        #self.setAttribute(QtCore.Qt.WA_TranslucentBackground) # 设置窗口背景透明
 
         ag = QDesktopWidget().availableGeometry()    # 显示器可用的长宽信息
         self.fixedGeometry = (ag.width() - self.width - 20, 
