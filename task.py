@@ -1,5 +1,6 @@
 import re
 from datetime import datetime
+from operator import attrgetter
 
 
 
@@ -146,6 +147,7 @@ class TaskLine(object):
 
 
     def format_text(self):
+        print(self.completion_date)
         text = "%s%s %s %s %s" % (
             self.mask if self.mask else "", 
             self.priority if self.priority else "", 
@@ -204,9 +206,18 @@ class Tasks(object):
             handle.write(text)
 
     
-    def taskSort(self, bypart):
-        pass
-
+    def taskSort(self, bypart=None):
+        oldest_time = datetime.strptime('1989-05-05', "%Y-%m-%d")
+        newest_time = datetime.strptime('2100-05-05', "%Y-%m-%d")
+        self.tasklines = sorted(self.tasklines, 
+            key=lambda x:x.creation_date if x.creation_date else oldest_time,
+            reverse=True)
+        self.tasklines = sorted(self.tasklines, 
+            key=lambda x:x.completion_date if x.completion_date else newest_time,
+            reverse=False)
+        self.tasklines = sorted(self.tasklines,
+        
+            key=lambda x: x.priority if x.priority else '(Z)')
 
 
 

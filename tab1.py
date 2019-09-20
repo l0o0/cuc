@@ -180,7 +180,7 @@ class TAB1(QtWidgets.QWidget):
         if button:
             row = self.tab1TaskTable.indexAt(button.pos()).row()
             self.checkcellwidget = self.tab1TaskTable.cellWidget(row, 0)
-            completion_date = datetime.now().strftime('%Y-%m-%d')
+            completion_date = datetime.now()
             self.checkcellwidget.taskline.completion_date = completion_date
             self.checkcellwidget.taskline.mask = 'x'
             print('check format text', row, self.checkcellwidget.taskline.format_text())

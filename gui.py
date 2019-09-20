@@ -207,6 +207,7 @@ if __name__ == '__main__':
             'donetxt':'done.txt'}
     tasks = Tasks(config['todotxt'], config['donetxt'])
     tasks.readFromFile()
+    tasks.taskSort()
 
     app = QApplication(sys.argv)
     tab1 = TAB1(tasks)
