@@ -35,8 +35,9 @@ class TaskLine(object):
                                 'k':'#800080',
                                 'v':'#800080'
                             }}
-    
 
+        # reserved word for some functions
+        self.reserved_words = ['@p']
     def parser(self, plain_text):
         break_len = 0
         self.plain_text = plain_text.strip()  
@@ -123,7 +124,10 @@ class TaskLine(object):
                 )
 
         # break line if content is too long
-        rich_text = rich_text + self.content + ' '
+        if self.contexts and '@p' in self.contexts:
+            rich_text = rich_text + "<b>%s</b> " % self.content
+        else:
+            rich_text = rich_text + self.content + ' '
 
         if self.projects:
             for i in range(len(self.projects)):
@@ -135,6 +139,11 @@ class TaskLine(object):
         if self.contexts:
             for i in range(len(self.contexts)):
                 p = self.contexts[i]
+
+                # pass on reserved words
+                if p in self.reserved_words:
+                    continue
+
                 rich_text = rich_text + "<font color=%s>%s</font> " % (
                     style['context'], p
                 )
@@ -217,8 +226,10 @@ class Tasks(object):
             key=lambda x:x.completion_date if x.completion_date else newest_time,
             reverse=False)
         self.tasklines = sorted(self.tasklines,
-        
             key=lambda x: x.priority if x.priority else '(Z)')
+        self.tasklines = sorted(self.tasklines, 
+            key=lambda x: 1 if x.contexts and '@p' in x.contexts else 0,
+            reverse=True)
 
 
 
