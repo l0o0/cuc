@@ -9,7 +9,7 @@ class TaskLine(object):
         # completion mark
         self.re_mask = re.compile("^x")
         # priority indicats by an uppercase character from A to Z
-        self.re_priority = re.compile('^x?(\([A-Z]\))\s')
+        self.re_priority = re.compile('^x?([\(（][A-Z][\)）])\s')
         # completion date and creation date
         # completion date appears first if completion date exists
         self.re_dates = re.compile("\s([1-9][0-9]{3}-[0-9]{2}-[0-9]{2})(?=\s|$)")
@@ -53,6 +53,8 @@ class TaskLine(object):
         self.priority = self.re_priority.search(self.plain_text)
         if self.priority:
             self.priority = self.priority.groups()[0] 
+            self.priority = self.priority.replace('（', '(')
+            self.priority = self.priority.replace('）', ')')
         else:
             self.priority = None 
 
