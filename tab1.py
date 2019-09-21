@@ -2,8 +2,6 @@ from datetime import datetime
 from PyQt5 import QtWidgets, QtCore, QtGui 
 from task import TaskLine
 
-import time
-
 
 
 class HiddenLabel(QtWidgets.QLabel):
@@ -21,7 +19,7 @@ class HiddenLabel(QtWidgets.QLabel):
     def mouseDoubleClickEvent(self, event):
         if event.button() == QtCore.Qt.LeftButton:
             self.hide()
-            print('double click', self.taskline.plain_text)
+            #print('double click', self.taskline.plain_text)
             self.buddy.setText(self.taskline.plain_text)
             self.buddy.show()
             self.buddy.setFocus()
@@ -54,10 +52,10 @@ class EditableCell(QtWidgets.QWidget):
     '''
     QLineEdit show when HiddenLabel is hidden
     '''
-    def __init__(self, idx, parent = None):
-        super().__init__()
-        self.parent = parent
-        self.taskline = self.parent.tasks.tasklines[idx]
+    def __init__(self, idx, tab1, parent = None):
+        super(EditableCell, self).__init__(parent)
+        self.tab1 = tab1
+        self.taskline = self.tab1.tasks.tasklines[idx]
         # Create ui
         self.myEdit = QtWidgets.QLineEdit()
         self.myEdit.hide() # Hide line edit
@@ -76,11 +74,11 @@ class EditableCell(QtWidgets.QWidget):
 
     def textEdited(self):
         # If the input is left empty, revert back to the label showing
-        row = self.parent.tab1TaskTable.indexAt(self.pos()).row()
+        row = self.tab1.tab1TaskTable.indexAt(self.pos()).row()
         print('edit finished', self.myEdit.text(), ' row:', row)
         self.taskline = TaskLine()
         self.taskline.parser(self.myEdit.text())
-        self.parent.tasks.tasklines[row] = self.taskline
+        self.tab1.tasks.tasklines[row] = self.taskline
         print('edited plain text', self.taskline.plain_text)
         # update text after saving
         self.myLabel.setText(self.taskline.enrich_text())
@@ -88,11 +86,15 @@ class EditableCell(QtWidgets.QWidget):
         self.myEdit.hide()
         self.myLabel.show()
         self.myLabel.setFocus()
+        self.tab1.edit_trigger.emit()
 
 
 
 class TAB1(QtWidgets.QWidget):
     trigger = QtCore.pyqtSignal()
+    check_trigger = QtCore.pyqtSignal(TaskLine)
+    add_trigger = QtCore.pyqtSignal(TaskLine)
+    edit_trigger = QtCore.pyqtSignal()
     def __init__(self, tasks, parent=None):
         super(TAB1, self).__init__(parent)
         self.tasks = tasks
@@ -124,17 +126,20 @@ class TAB1(QtWidgets.QWidget):
         # signal and slot
         # update tray icon by taskline number 
         self.trigger.connect(self.parent().tray_icon.updateIcon)
+        self.check_trigger.connect(self.parent().updateTab2Table)
+        self.add_trigger.connect(self.parent().updateTab1Table)
+        self.edit_trigger.connect(self.parent().updateTab1Table)
+
 
         # display tasks
         for i, t in enumerate(self.tasks.tasklines):
             print('init row %s' % i)
-            cellwidget = self.createCellQlabel(i, self)
+            cellwidget = self.createCellQlabel(i)
             self.tab1TaskTable.setCellWidget(i, 0, cellwidget)
             editButton = self.createButton('checkmark')
             deleteButton = self.createButton('delete')            
             self.tab1TaskTable.setCellWidget(i,1, editButton)
             self.tab1TaskTable.setCellWidget(i,2, deleteButton)
-            self.tab1TaskTable.cellWidget(i, 1).setHidden(True)
         print('init table rows ', self.tab1TaskTable.rowCount())
         self.layout.setContentsMargins(3,3,3,0)
         self.setLayout(self.layout)
@@ -154,8 +159,8 @@ class TAB1(QtWidgets.QWidget):
 
 
     # create editable cell
-    def createCellQlabel(self, idx, parent):
-        cellwidget = EditableCell(idx, parent) 
+    def createCellQlabel(self, idx):
+        cellwidget = EditableCell(idx, self) 
         return cellwidget       
 
 
@@ -163,25 +168,18 @@ class TAB1(QtWidgets.QWidget):
         #QMessageBox.information(self, "Info", "Enter Pressed.")
         print('total rows before', self.tab1TaskTable.rowCount())
         if not self.textboxAdd.text().strip():
-            QtWidgetss.QMessageBox.information(self, "Info", "Input something")
+            QtWidgets.QMessageBox.information(self, "Info", "Empty content")
         else:
-            rowidx = 0
-            self.tab1TaskTable.insertRow(rowidx)
             taskline = TaskLine()
             taskline.parser(self.textboxAdd.text())
-            self.tasks.tasklines.insert(0, taskline)
-            cellwidget = self.createCellQlabel(rowidx, self)
-            self.tab1TaskTable.setCellWidget(rowidx, 0, cellwidget)
-            editButton = self.createButton('checkmark')
-            deleteButton = self.createButton('delete')
-            self.tab1TaskTable.setCellWidget(rowidx, 1, editButton)
-            self.tab1TaskTable.setCellWidget(rowidx, 2, deleteButton)
+            self.add_trigger.emit(taskline)
+            self.trigger.emit()
             self.textboxAdd.clear()           
         print('total rows after', self.tab1TaskTable.rowCount())
         # send signal to update tray icon
-        self.trigger.emit()
-
-
+        
+    
+    
     def checkButtonAction(self):
         button = self.sender()
         if button:
@@ -192,10 +190,10 @@ class TAB1(QtWidgets.QWidget):
             self.checkcellwidget.taskline.mask = 'x'
             print('check format text', row, self.checkcellwidget.taskline.format_text())
             print('check plain text', row, self.tasks.tasklines[row].plain_text)
-            self.tasks.saveDoneTask(self.checkcellwidget.taskline)
             self.tab1TaskTable.removeRow(row)
+            self.check_trigger.emit(self.tasks.tasklines[row])
             del self.tasks.tasklines[row]
-
+            
     
     def deleteButtonAction(self):
         button = self.sender()
