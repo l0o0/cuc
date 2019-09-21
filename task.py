@@ -12,7 +12,7 @@ class TaskLine(object):
         self.re_priority = re.compile('^x?([\(（][A-Z][\)）])\s')
         # completion date and creation date
         # completion date appears first if completion date exists
-        self.re_dates = re.compile("\s([1-9][0-9]{3}-[0-9]{2}-[0-9]{2})(?=\s|$)")
+        self.re_dates = re.compile("\s?([1-9][0-9]{3}-[0-9]{2}-[0-9]{2})(?=\s|$)")
         # non-whitespace characters starts with +
         self.re_projects = re.compile("\s(\+\S+)")
         # non-whitespace characters starts with @
@@ -192,7 +192,7 @@ class Tasks(object):
         self.donetxt = donetxt
 
     
-    def readFromFile(self):
+    def readFromFile(self, f='todo'):
         self.tasklines = []
         with open(self.todotxt, encoding='utf-8') as handle:
             for line in handle.readlines():
@@ -207,13 +207,6 @@ class Tasks(object):
         with open(self.todotxt, 'w', encoding='utf-8') as handle:          
             handle.writelines(writelines)
         print('save todo.txt')
-
-
-    def saveDoneTask(self, taskline):
-        text = taskline.format_text()
-        text += '\n'
-        with open(self.donetxt, 'a', encoding='utf-8') as handle:
-            handle.write(text)
 
     
     def taskSort(self, bypart=None):
@@ -234,7 +227,8 @@ class Tasks(object):
 
 
 if __name__ == '__main__':
-    s = '(A) 2019-09-01 2019-08-31 call kitty @phone +project1 +project2 due:test'
+    #s = '(A) 2019-09-01 2019-08-31 call kitty @phone +project1 +project2 due:test'
+    s = "2019-09-21 new test 3"
     s1 = 'x(A) 2019-09-01 2019-08-31 call kitty @phone +pro1 +pro1 due:test @try'
 
     t1 = TaskLine()
