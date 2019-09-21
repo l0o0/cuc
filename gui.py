@@ -14,6 +14,7 @@ from pyqtkeybind import keybinder
 
 from task import Tasks, TaskLine
 from tab1 import TAB1
+from tab2 import TAB2 
 
 
 
@@ -38,17 +39,17 @@ class App(QWidget):
         self.height = 360
         self.initUI()
         # read configure file
-        config = {'todotxt':'todo.txt',
+        self.config = {'todotxt':'todo.txt',
             'donetxt':'done.txt'}
         # create tasks by reading files in configure file
-        tasks = Tasks(config['todotxt'], config['donetxt'])
+        tasks = Tasks(self.config['todotxt'], self.config['donetxt'])
         tasks.readFromFile()
         tasks.taskSort()
         # create tray icon 
         self.initTrayIcon(tasks.tasklines)
         # create tab1,  parent is APP
-        self.tab1 = TAB1(tasks, self)
-        self.tab2()
+        self.initTab2()
+        self.initTab1(tasks)       
         self.tab3()
         self.initTab()
 
@@ -108,17 +109,15 @@ class App(QWidget):
         self.layout.setContentsMargins(0, 1, 0, 2)
         self.setLayout(self.layout)
 
-        # tab1 
-    
 
-        # tab2 
-    def tab2(self):
-        self.tab2 = QWidget()
-        self.tab2.layout = QVBoxLayout()
-        lb = QLabel()
-        lb.setText('Done')
-        self.tab2.layout.addWidget(lb)
-        self.tab2.setLayout(self.tab2.layout)
+    # tab1 
+    def initTab1(self, tasks):
+        self.tab1 = TAB1(tasks, self)
+
+
+    # tab2 
+    def initTab2(self):
+        self.tab2 = TAB2(self)
 
     
     # tab3 
@@ -139,6 +138,33 @@ class App(QWidget):
     def rightBottomShow(self):
         self.setGeometry(*self.fixedGeometry)
         self.show()
+
+    
+    # update tab1 table 
+    def updateTab1Table(self, taskline=None):
+        if taskline:
+            self.tab1.tasks.tasklines.append(taskline)
+            self.tab1.tasks.taskSort()
+        self.tab1.tab1TaskTable.clear()
+        self.tab1.tab1TaskTable.setRowCount(len(self.tab1.tasks.tasklines))
+        self.tab1.tasks.taskSort()
+        for i, t in enumerate(self.tab1.tasks.tasklines):
+            cellwidget = self.tab1.createCellQlabel(i)
+            self.tab1.tab1TaskTable.setCellWidget(i, 0, cellwidget)
+            editButton = self.tab1.createButton('checkmark')
+            deleteButton = self.tab1.createButton('delete')            
+            self.tab1.tab1TaskTable.setCellWidget(i,1, editButton)
+            self.tab1.tab1TaskTable.setCellWidget(i,2, deleteButton)
+
+
+    # update tab2 table
+    def updateTab2Table(self, insert_taskline):
+        self.tab2.tasklines_done.insert(0, insert_taskline)
+        self.tab2.tab2TaskTable.insertRow(0)
+        cellwidget = QtWidgets.QLabel("<s>%s</s>" % self.tab2.tasklines_done[0].enrich_text())
+        self.tab2.tab2TaskTable.setCellWidget(0, 0, cellwidget)
+        restoreButt = self.tab2.createButton()
+        self.tab2.tab2TaskTable.setCellWidget(0, 1, restoreButt)
     
 
     @QtCore.pyqtSlot()
@@ -196,6 +222,7 @@ class SystemTrayIcon(QSystemTrayIcon):
 
     def exit(self):
         self.parent().tab1.tasks.saveToFile()
+        self.parent().tab2.saveDoneTask()
         QtCore.QCoreApplication.exit()        
 
 
