@@ -15,6 +15,7 @@ from pyqtkeybind import keybinder
 from task import Tasks, TaskLine
 from tab1 import TAB1
 from tab2 import TAB2 
+from menu import MENU
 
 
 
@@ -48,13 +49,11 @@ class App(QWidget):
         # create tray icon 
         self.initTrayIcon(tasks.tasklines)
         # create tab1,  parent is APP
-        self.initTab2()
-        self.initTab1(tasks)       
+        self.initTab1(tasks)    
+        self.initTab2()  
         self.tab3()
+        self.menu = MENU()
         self.initTab()
-
-        # self.A = A(self)
-        # self.A.count()
         
         
     def initUI(self):
@@ -95,10 +94,11 @@ class App(QWidget):
         self.pinButton.setCheckable(True)
         self.pinButton.setIcon(QtGui.QIcon("icons/pinterest2.png"))
         self.pinButton.clicked.connect(self.winPinTop)
-        self.menuButton = QPushButton()
+        self.menuButton = QtWidgets.QPushButton()
         self.menuButton.setMaximumSize(30, 30)
         self.menuButton.setChecked(True)
         self.menuButton.setIcon(QtGui.QIcon("icons/cog.png"))
+        self.menuButton.clicked.connect(self.showMenu)
         self.bottom.addWidget(self.pinButton,alignment=QtCore.Qt.AlignRight)
         self.bottom.addWidget(self.menuButton)
         self.bottom.setContentsMargins(1, 1, 1, 1)
@@ -179,10 +179,17 @@ class App(QWidget):
             self.setWindowFlags(QtCore.Qt.FramelessWindowHint |QtCore.Qt.Tool)
             self.rightBottomShow()
 
+    
+    def showMenu(self):
+        print('menu')
+        if self.menu.isHidden():
+            self.menu.show()
+        else:
+            self.menu.close()
+
 
 
 class SystemTrayIcon(QSystemTrayIcon):
-
     def __init__(self, init_tasklines, parent=None):
         '''
         init_tasklines, tasklines parsed from todo.txt, set icon
