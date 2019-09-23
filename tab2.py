@@ -58,7 +58,7 @@ class TAB2(QtWidgets.QWidget):
     
     def saveDoneTask(self):
         done_texts = [t.format_text() + '\n' for t in self.tasklines_done]
-        with open(self.config['donetxt'], 'a', encoding='utf-8') as handle:
+        with open(self.config.config['donetxt'], 'a', encoding='utf-8') as handle:
             handle.writelines(done_texts)
             print('save done.txt, %s' % len(self.tasklines_done))
         

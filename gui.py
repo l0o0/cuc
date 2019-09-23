@@ -1,3 +1,5 @@
+import json
+import os
 import sys
 from datetime import datetime
 from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QDesktopWidget, QLineEdit, \
@@ -30,6 +32,66 @@ class WinEventFilter(QtCore.QAbstractNativeEventFilter):
 
 
 
+class CONFIG(object):
+    def __init__(self):
+        self.config_file = os.path.join(os.path.expanduser('~'), '.cuc', 'config.json')
+        self.default_config = {'todotxt':'todo.txt',
+            'donetxt':'done.txt',
+            "style":{'priority':{
+                '(A)' : '#FFD700',
+                '(B)' : '#FF7F50',
+                '(C)' : '#3CB371',
+                '(D)' : '#1E90FF'
+                },
+                'completion_date':'#B22222',
+                'creation_date':'green',
+                'content':'black',
+                'project':'#e74c3c',
+                'context':'#3498db',
+                'keyvalue':{
+                    'k':'#800080',
+                    'v':'#800080'
+                }
+            },
+            "layout":{'window_fixed':True,
+                'window_pos':'rightbottom',
+                'window_opacity':0.95},
+            "hotkey":{
+                "pin":"Shift+Ctrl+P",
+                'display':'Shift+Ctrl+A'
+            }
+        }
+        
+        self.checkConfigFile()
+        self.readConfigFile()
+    
+    def checkConfigFile(self):
+        if os.path.isfile(self.config_file):
+            print('config file exists')
+        else:
+            os.makedirs(os.path.dirname(self.config_file), exist_ok=True)
+            self.saveConfigFile(self.default_config)
+            print('create default config.')
+    
+
+    def readConfigFile(self):
+        with open(self.config_file, encoding='utf-8') as handle:
+            self.config = json.load(handle)
+
+
+    def saveConfigFile(self, config):
+        with open(self.config_file, 'w', encoding='utf-8') as handle:
+                json.dump(self.default_config, handle)
+        print('config save')
+
+
+    def restoreConfig(self):
+        self.config = self.default_config
+        self.saveConfigFile(self.config)
+
+
+
+
 class App(QWidget):
 
     def __init__(self):
@@ -40,10 +102,9 @@ class App(QWidget):
         self.height = 360
         self.initUI()
         # read configure file
-        self.config = {'todotxt':'todo.txt',
-            'donetxt':'done.txt'}
+        self.config = CONFIG()
         # create tasks by reading files in configure file
-        tasks = Tasks(self.config['todotxt'], self.config['donetxt'])
+        tasks = Tasks(self.config.config['todotxt'], self.config.config['donetxt'])
         tasks.readFromFile()
         tasks.taskSort()
         # create tray icon 
