@@ -1,6 +1,7 @@
 import re
 from datetime import datetime
 from operator import attrgetter
+from emoji import emojize
 
 
 
@@ -123,9 +124,9 @@ class TaskLine(object):
                     style['creation_date'], datetime.strftime(self.creation_date, '%Y-%m-%d')
                 )
 
-        # break line if content is too long
+        # set content bold and add pushpin emoji at the start of content.
         if self.contexts and '@p' in self.contexts:
-            rich_text = rich_text + "<b>%s</b> " % self.content
+            rich_text = rich_text + "\U0001F4CC <b>%s</b> " % self.content
         else:
             rich_text = rich_text + self.content + ' '
 
@@ -154,7 +155,8 @@ class TaskLine(object):
                 rich_text = rich_text + "<font color=%s>%s</font>:<font color=%s>%s</font> " % (
                     style['keyvalue']['k'], k, style['keyvalue']['v'], v
                 )
-        return rich_text
+
+        return emojize(rich_text)
 
 
     def format_text(self):

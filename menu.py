@@ -45,7 +45,7 @@ class MENU(QtWidgets.QWidget):
                             self.width,
                             self.height))
 
-        QtGui.QFontDatabase.addApplicationFont('NotoColorEmoji.ttf')
+        
 
     
     def initTab1(self):

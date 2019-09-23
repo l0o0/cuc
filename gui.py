@@ -54,7 +54,8 @@ class App(QWidget):
         self.tab3()
         self.menu = MENU()
         self.initTab()
-        
+        QtGui.QFontDatabase.addApplicationFont('font/NotoColorEmoji.ttf')
+
         
     def initUI(self):
         # 设置窗口固定大小
@@ -162,6 +163,7 @@ class App(QWidget):
         self.tab2.tasklines_done.insert(0, insert_taskline)
         self.tab2.tab2TaskTable.insertRow(0)
         cellwidget = QtWidgets.QLabel("<s>%s</s>" % self.tab2.tasklines_done[0].enrich_text())
+        cellwidget.setStyleSheet("QLabel{padding-top:0;padding-left:5px;font-family:Arial,NotoColorEmoji;font-size:15px}")
         self.tab2.tab2TaskTable.setCellWidget(0, 0, cellwidget)
         restoreButt = self.tab2.createButton()
         self.tab2.tab2TaskTable.setCellWidget(0, 1, restoreButt)

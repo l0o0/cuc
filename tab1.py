@@ -14,6 +14,7 @@ class HiddenLabel(QtWidgets.QLabel):
         self.buddy = buddy
         self.taskline = taskline
         self.setText(self.taskline.enrich_text())
+        self.setStyleSheet("QLabel{padding-top:0;font-family:Arial,NotoColorEmoji;font-size:15px}")
 
     # left double clicked to edit
     def mouseDoubleClickEvent(self, event):
