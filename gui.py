@@ -113,7 +113,7 @@ class App(QWidget):
         self.initTab1(tasks)    
         self.initTab2()  
         self.tab3()
-        self.menu = MENU()
+        self.menu = MENU(self)
         self.initTab()
         QtGui.QFontDatabase.addApplicationFont('font/NotoColorEmoji.ttf')
 
@@ -151,7 +151,9 @@ class App(QWidget):
         self.tabs.addTab(self.tab3, "Summary")
         self.bottom = QHBoxLayout()
         self.pinButton = QtWidgets.QPushButton()
+        self.pinButton.setToolTip('Keep window on top.')
         self.menuButton = QtWidgets.QPushButton()
+        self.menuButton.setToolTip('Show preference setting window.')
         self.pinButton.setMaximumSize(30, 30)
         self.pinButton.setCheckable(True)
         self.pinButton.setIcon(QtGui.QIcon("icons/pinterest2.png"))
