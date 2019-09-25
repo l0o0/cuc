@@ -3,13 +3,13 @@ from PyQt5 import QtWidgets, QtCore, QtGui
 
 
 
-class MENU(QtWidgets.QWidget):
+class MENU(QtWidgets.QDialog):
     def __init__(self, parent=None):
         super(MENU, self).__init__(parent)
         self.setWindowTitle('Preference')
         self.width = 600
         self.height = 500
-        self.setWindowFlags(QtCore.Qt.Tool)
+        #self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
         self.setFixedSize(self.width, self.height)
         self.layout = QtWidgets.QVBoxLayout()
         self.tabs = QtWidgets.QTabWidget()    
@@ -53,8 +53,8 @@ class MENU(QtWidgets.QWidget):
         self.tab1groupBox1Layout = QtWidgets.QGridLayout()
         self.createLabel(self.tab1groupBox1Layout, 'TODO', 50, 0, 0)
         self.createLabel(self.tab1groupBox1Layout, 'DONE', 50, 1, 0)
-        self.todotxt = QtWidgets.QLineEdit('todo.txt')
-        self.donetxt = QtWidgets.QLineEdit('done.txt')
+        self.todotxt = QtWidgets.QLineEdit(self.parent().config.config['todotxt'])
+        self.donetxt = QtWidgets.QLineEdit(self.parent().config.config['donetxt'])
         self.todoButton = self.createBroswerButton()
         self.doneButton = self.createBroswerButton()
         self.todoButton.clicked.connect(self.openFileDialog)
@@ -91,10 +91,13 @@ class MENU(QtWidgets.QWidget):
         self.tab1groupBox3 = QtWidgets.QGroupBox('Global Shortcuts')
         self.tab1groupBox3.setMaximumHeight(100)
         self.tab1groupBox3Layout = QtWidgets.QGridLayout()
+        self.tab1groupBox3Layout.setAlignment(QtCore.Qt.AlignLeft)
         self.createLabel(self.tab1groupBox3Layout, 'Show Window', 90, 0, 0)
         self.createLabel(self.tab1groupBox3Layout, "Stay on Top", 90, 1, 0)
-        self.showWin = QtWidgets.QLineEdit()
-        self.keepTop = QtWidgets.QLineEdit()
+        self.showWin = QtWidgets.QLineEdit(self.parent().config.config['hotkey']['display'])
+        self.showWin.setMaximumWidth(200)
+        self.keepTop = QtWidgets.QLineEdit(self.parent().config.config['hotkey']['pin'])
+        self.keepTop.setMaximumWidth(200)
         self.tab1groupBox3Layout.addWidget(self.showWin, 0, 1)
         self.tab1groupBox3Layout.addWidget(self.keepTop, 1,1)
         self.tab1groupBox3.setLayout(self.tab1groupBox3Layout)
@@ -194,11 +197,15 @@ class MENU(QtWidgets.QWidget):
 
 
     def openFileDialog(self):
+        idx = self.tab1groupBox1Layout.indexOf(self.sender())
         options = QtWidgets.QFileDialog.Options()
         options |= QtWidgets.QFileDialog.DontUseNativeDialog
         fileName, _ = QtWidgets.QFileDialog.getOpenFileName(self,"Select File", "","All Files (*);;Txt file (*.txt)", options=options)
         if fileName:
-            print(fileName)
+            if idx == 4:
+                self.todotxt.setText(fileName)
+            elif idx == 5:
+                self.donetxt.setText(fileName)
 
     def changeFontSize(self):
         self.fontsize.setText(str(self.fontsizeSlider.value()))
@@ -207,6 +214,29 @@ class MENU(QtWidgets.QWidget):
     def changeOpacity(self):
         self.opacityLabel.setText(str(self.opacitySlider.value()/100))
 
+
+    # todo
+    def saveConfig(self):
+        tmp_config = self.parent().config.config
+        tmp_config['todotxt'] = self.todotxt.text()
+        tmp_config['donetxt'] = self.donetxt.text()
+        tmp_config['layout']['window_fixed'] = self.sepWinButton.checked
+        tmp_config['layout']['window_opacity'] = self.opacitySlider.value()
+        tmp_config['hotkey']['pin'] = self.keepTop.text()
+        tmp_config['hotkey']['display'] = self.showWin.text()
+        tmp_config['fontsize'] = int(self.fontsize.text())
+        tmp_config['style']['priority']['(A)'] = self.tab2groupBox1Layout.itemAt(1).widget().text()
+        tmp_config['style']['priority']['(B)'] = self.tab2groupBox1Layout.itemAt(4).widget().text()
+        tmp_config['style']['priority']['(C)'] = self.tab2groupBox1Layout.itemAt(7).widget().text()
+        tmp_config['style']['priority']['(D)'] = self.tab2groupBox1Layout.itemAt(10).widget().text()
+        tmp_config['style']['completion_date'] = self.tab2groupBox1Layout.itemAt(13).widget().text()
+        tmp_config['style']['creation_date'] = self.tab2groupBox1Layout.itemAt(16).widget().text()
+        tmp_config['style']['content'] = self.tab2groupBox1Layout.itemAt(19).widget().text()
+        tmp_config['style']['project'] = self.tab2groupBox1Layout.itemAt(22).widget().text()
+        tmp_config['style']['context'] = self.tab2groupBox1Layout.itemAt(25).widget().text()
+        tmp_config['style']['keyvalue']['k'] = self.tab2groupBox1Layout.itemAt(28).widget().text()
+        tmp_config['style']['keyvalue']['v'] = self.tab2groupBox1Layout.itemAt(31).widget().text()
+        #print(tmp_config)
 
     # def openColorDialog(self):
     #     button = self.sender()
@@ -217,15 +247,18 @@ class MENU(QtWidgets.QWidget):
     #             print(color.name())
     #     except:
     #         print("ERROR")
-
+    
+    # override parent close event
+    def closeEvent(self, event):
+        #event.ignore()
+        self.close()
     
     def accept(self):
         # new changes should take effect.
         print('accept')  
-
+        self.saveConfig()
 
     def reject(self):
-        print('reject & close')
         self.close()
 
     def restoreDefaults(self):

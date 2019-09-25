@@ -247,7 +247,6 @@ class App(QWidget):
 
     
     def showMenu(self):
-        print('menu')
         if self.menu.isHidden():
             self.menu.show()
         else:
