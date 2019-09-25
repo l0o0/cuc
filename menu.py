@@ -5,7 +5,7 @@ from PyQt5 import QtWidgets, QtCore, QtGui
 
 class MENU(QtWidgets.QWidget):
     def __init__(self, parent=None):
-        #super(MENU, self).__init__(parent)
+        super(MENU, self).__init__(parent)
         self.setWindowTitle('Preference')
         self.width = 600
         self.height = 500
@@ -24,11 +24,12 @@ class MENU(QtWidgets.QWidget):
         self.bb = QtWidgets.QDialogButtonBox()
         self.bb.setGeometry(QtCore.QRect(150, 250, 341, 32))
         self.bb.setOrientation(QtCore.Qt.Horizontal)
-        self.bb.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel|QtWidgets.QDialogButtonBox.Ok)
+        self.bb.setStandardButtons(QtWidgets.QDialogButtonBox.RestoreDefaults | QtWidgets.QDialogButtonBox.Cancel|QtWidgets.QDialogButtonBox.Ok)
         self.bb.button(QtWidgets.QDialogButtonBox.Cancel).setToolTip('Discard changes and close the menu')
         self.bb.button(QtWidgets.QDialogButtonBox.Ok).setToolTip('Save changes')
         self.bb.accepted.connect(self.accept)
         self.bb.rejected.connect(self.reject)
+        self.bb.clicked.connect(self.restoreDefaults)
         self.bottom_layout.addWidget(self.bb)
 
         self.layout.addWidget(self.tabs)
@@ -67,13 +68,23 @@ class MENU(QtWidgets.QWidget):
 
         self.tab1groupBox2 = QtWidgets.QGroupBox('Window Layout')
         self.tab1groupBox2.setMaximumHeight(100)
-        self.tab1groupBox2Layout = QtWidgets.QVBoxLayout()
+        self.tab1groupBox2Layout = QtWidgets.QGridLayout()
         self.sepWinButton = QtWidgets.QCheckBox("Get rid of the taskbar.")
         self.sepWinButton.checked = False
         lb = QtWidgets.QLabel('Opacity')
         lb.setMaximumWidth(50)
-        self.tab1groupBox2Layout.addWidget(self.sepWinButton)
-        self.tab1groupBox2Layout.addWidget(lb)
+        self.opacitySlider = QtWidgets.QSlider(QtCore.Qt.Horizontal)
+        self.opacitySlider.setMinimum(0)
+        self.opacitySlider.setMaximum(100)
+        self.opacitySlider.setMaximumWidth(300)
+        self.opacitySlider.setValue(self.parent().config.config['layout']['window_opacity']*100)
+        self.opacitySlider.setSingleStep(1)
+        self.opacityLabel = QtWidgets.QLabel(str(self.opacitySlider.value()/100))
+        self.opacitySlider.valueChanged.connect(self.changeOpacity)
+        self.tab1groupBox2Layout.addWidget(self.sepWinButton, 0, 0)
+        self.tab1groupBox2Layout.addWidget(lb, 1,0)
+        self.tab1groupBox2Layout.addWidget(self.opacitySlider, 1, 1 )
+        self.tab1groupBox2Layout.addWidget(self.opacityLabel, 1, 2)
         self.tab1groupBox2.setLayout(self.tab1groupBox2Layout)
         self.tab1.layout.addWidget(self.tab1groupBox2, 1,0)
 
@@ -101,26 +112,49 @@ class MENU(QtWidgets.QWidget):
         self.tab2groupBox1Layout = QtWidgets.QGridLayout()
         self.tab2groupBox1Layout.setAlignment(QtCore.Qt.AlignLeft)
 
-        self.createLabel(self.tab2groupBox1Layout, 'Priority', 100, 0, 0)
-        self.createLabel(self.tab2groupBox1Layout, 'Complete Date', 100, 1, 0)
-        self.createLabel(self.tab2groupBox1Layout, 'Create Date', 100, 2, 0)
-        self.createLabel(self.tab2groupBox1Layout, 'Content', 100, 3, 0)
-        self.createLabel(self.tab2groupBox1Layout, 'Project', 100, 4, 0)
-        self.createLabel(self.tab2groupBox1Layout, 'Key:Value', 100, 5, 0)
+        istart = 0
+        for k1 in self.parent().config.config['style'].keys():
+            tmp = self.parent().config.config['style'][k1]
+            if isinstance(tmp, dict):
+                for k2 in tmp.keys():
+                    self.createLabel(self.tab2groupBox1Layout, '%s:%s' % (k1, k2), 100, istart%6, 0 + (istart//6)*3)
+                    self.createLineEdit(self.tab2groupBox1Layout, tmp[k2], 100, istart%6, 1 + (istart//6)*3)
+                    self.createColorButton(istart%6, 2 + (istart//6)*3, tmp[k2])
+                    istart += 1
+            else:
+                self.createLabel(self.tab2groupBox1Layout, '%s' % k1, 100, istart%6, 0+ (istart//6)*3)
+                self.createLineEdit(self.tab2groupBox1Layout, tmp, 100, istart%6, 1+ (istart//6)*3)
+                self.createColorButton(istart%6, 2+ (istart//6)*3, tmp)
+                istart += 1
 
-        self.createLineEdit(self.tab2groupBox1Layout, 'Priority', 100, 0, 1)
-        self.createLineEdit(self.tab2groupBox1Layout, 'Complete Date', 100, 1, 1)
-        self.createLineEdit(self.tab2groupBox1Layout, 'Create Date', 100, 2, 1)
-        self.createLineEdit(self.tab2groupBox1Layout, 'Content', 100, 3, 1)
-        self.createLineEdit(self.tab2groupBox1Layout, 'Project', 100, 4, 1)
-        self.createLineEdit(self.tab2groupBox1Layout, 'Key:Value', 100, 5, 1)
-
-        for i in range(6):
-            self.createColorButton(i)
+        self.tab2groupBox2 = QtWidgets.QGroupBox("Task Font Size")
+        self.tab2groupBox2.setMaximumHeight(80)
+        self.tab2groupBox2Layout = QtWidgets.QGridLayout()
+        self.tab2groupBox2Layout.setAlignment(QtCore.Qt.AlignLeft)
+        self.createLabel(self.tab2groupBox2Layout, 'Font Size', 80, 0, 0)
+        self.fontsizeSlider = QtWidgets.QSlider(QtCore.Qt.Horizontal)
+        self.fontsizeSlider.setMaximum(20)
+        self.fontsizeSlider.setMinimum(10)
+        self.fontsizeSlider.setMaximumWidth(300)
+        self.fontsizeSlider.setSingleStep(1)
+        self.fontsizeSlider.setValue(self.parent().config.config['fontsize'])
+        self.fontsizeSlider.valueChanged.connect(self.changeFontSize)
+        self.tab2groupBox2Layout.addWidget(self.fontsizeSlider, 0, 1)
+        self.fontsize = QtWidgets.QLabel(str(self.parent().config.config['fontsize']))
+        #self.fontsize.setMaximumWidth(35)
+        self.fontsize.setMaximumSize(35, 35)
+        self.tab2groupBox2Layout.addWidget(self.fontsize, 0, 2)
+        self.test_text = QtWidgets.QLabel("A字体")
+        self.test_text.setMinimumHeight(40)
+        self.test_text.setStyleSheet("QLabel{font-size:%spx}" % self.parent().config.config['fontsize'])
+        self.tab2groupBox2Layout.addWidget(self.test_text, 0, 3)
 
         self.tab2groupBox1.setLayout(self.tab2groupBox1Layout)
+        self.tab2groupBox2.setLayout(self.tab2groupBox2Layout)
         self.tab2.layout.addWidget(self.tab2groupBox1)
+        self.tab2.layout.addWidget(self.tab2groupBox2)
         self.tab2.setLayout(self.tab2.layout)
+
 
 
     def initTab3(self):
@@ -139,12 +173,12 @@ class MENU(QtWidgets.QWidget):
         return butt
 
 
-    def createColorButton(self, row, color='green'):
+    def createColorButton(self, row, col, color='green'):
         butt = QtWidgets.QPushButton()
         butt.setMaximumWidth(30)
         butt.setStyleSheet("background-color: %s" % color)
-        butt.clicked.connect(self.openColorDialog)
-        self.tab2groupBox1Layout.addWidget(butt, row, 2)
+        #butt.clicked.connect(self.openColorDialog)
+        self.tab2groupBox1Layout.addWidget(butt, row, col)
 
 
     def createLabel(self, layout, text, width, row, col):
@@ -166,16 +200,23 @@ class MENU(QtWidgets.QWidget):
         if fileName:
             print(fileName)
 
+    def changeFontSize(self):
+        self.fontsize.setText(str(self.fontsizeSlider.value()))
+        self.test_text.setStyleSheet("QLabel{font-size:%spx}" % self.fontsizeSlider.value())
 
-    def openColorDialog(self):
-        button = self.sender()
-        print(self.tab2groupBox1Layout.indexOf(button))
-        try:
-            color = QtWidgets.QColorDialog.getColor()
-            if color.isValid():
-                print(color.name())
-        except:
-            print("ERROR")
+    def changeOpacity(self):
+        self.opacityLabel.setText(str(self.opacitySlider.value()/100))
+
+
+    # def openColorDialog(self):
+    #     button = self.sender()
+    #     print(self.tab2groupBox1Layout.indexOf(button))
+    #     try:
+    #         color = QtWidgets.QColorDialog.getColor()
+    #         if color.isValid():
+    #             print(color.name())
+    #     except:
+    #         print("ERROR")
 
     
     def accept(self):
@@ -186,4 +227,7 @@ class MENU(QtWidgets.QWidget):
     def reject(self):
         print('reject & close')
         self.close()
+
+    def restoreDefaults(self):
+        print('restore')
 

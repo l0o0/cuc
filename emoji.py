@@ -2826,6 +2826,6 @@ def emojize(string):
     pattern = re.compile(u'(~[a-zA-Z0-9\\+\\-_&.ô’Åéãíç()!#*]+~)')
     def replace(match):
         mg = match.group(1)
-        print('mg',mg, mg.replace('~', ':'), EMOJI_UNICODE.get(mg.replace('~', ':'), 'AA'))
+        #print('mg',mg, mg.replace('~', ':'), EMOJI_UNICODE.get(mg.replace('~', ':'), 'AA'))
         return EMOJI_UNICODE.get(mg.replace('~', ':'), mg)
     return pattern.sub(replace, string)

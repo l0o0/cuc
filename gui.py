@@ -53,6 +53,7 @@ class CONFIG(object):
                     'v':'#800080'
                 }
             },
+            "fontsize": 15,
             "layout":{'window_fixed':True,
                 'window_pos':'rightbottom',
                 'window_opacity':0.95},
@@ -81,7 +82,7 @@ class CONFIG(object):
 
     def saveConfigFile(self, config):
         with open(self.config_file, 'w', encoding='utf-8') as handle:
-                json.dump(self.default_config, handle)
+                json.dump(self.default_config, handle, indent=True)
         print('config save')
 
 
@@ -93,7 +94,6 @@ class CONFIG(object):
 
 
 class App(QWidget):
-
     def __init__(self):
         super().__init__()
         self.left = 10
@@ -122,7 +122,7 @@ class App(QWidget):
         # 设置窗口固定大小
         self.setFixedSize(self.width, self.height)
         # 设置窗体无边框
-        self.setWindowFlags(QtCore.Qt.Tool | QtCore.Qt.FramelessWindowHint)
+        self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint | QtCore.Qt.Tool | QtCore.Qt.FramelessWindowHint | QtCore.Qt.CustomizeWindowHint)
         # 设置透明背景
         self.setWindowOpacity(0.95)
         #self.setAttribute(QtCore.Qt.WA_TranslucentBackground) # 设置窗口背景透明
@@ -156,6 +156,7 @@ class App(QWidget):
         self.menuButton.setToolTip('Show preference setting window.')
         self.pinButton.setMaximumSize(30, 30)
         self.pinButton.setCheckable(True)
+        self.pinButton.setChecked(True)
         self.pinButton.setIcon(QtGui.QIcon("icons/pinterest2.png"))
         self.pinButton.clicked.connect(self.winPinTop)
         self.menuButton = QtWidgets.QPushButton()
@@ -237,11 +238,11 @@ class App(QWidget):
         button = self.sender()
         if button.isChecked():
             print('on top')
-            self.setWindowFlags(QtCore.Qt.FramelessWindowHint | QtCore.Qt.WindowStaysOnTopHint| QtCore.Qt.Tool)
+            self.setWindowFlags(QtCore.Qt.CustomizeWindowHint| QtCore.Qt.FramelessWindowHint | QtCore.Qt.WindowStaysOnTopHint| QtCore.Qt.Tool)
             self.rightBottomShow()
         else:
             print('no top')
-            self.setWindowFlags(QtCore.Qt.FramelessWindowHint |QtCore.Qt.Tool)
+            self.setWindowFlags(QtCore.Qt.FramelessWindowHint |QtCore.Qt.Tool | QtCore.Qt.CustomizeWindowHint)
             self.rightBottomShow()
 
     
@@ -251,7 +252,6 @@ class App(QWidget):
             self.menu.show()
         else:
             self.menu.close()
-
 
 
 class SystemTrayIcon(QSystemTrayIcon):
@@ -271,10 +271,10 @@ class SystemTrayIcon(QSystemTrayIcon):
         QSystemTrayIcon.__init__(self, icon, parent)
         
         menu = QMenu(parent)
-        showAction = menu.addAction('Show')
+        showAction = menu.addAction('&Show')
         showAction.triggered.connect(self.parent().rightBottomShow)
         menu.addSeparator()
-        exitAction = menu.addAction('Exit')
+        exitAction = menu.addAction('&Exit')
         exitAction.triggered.connect(self.exit)      
         self.setContextMenu(menu)
         self.activated.connect(self.onTrayIconActivated)
@@ -327,11 +327,11 @@ if __name__ == '__main__':
     
 
     # keybinder from here
-    # keybinder.init()
-    # win_event_filter = WinEventFilter(keybinder)
-    # event_dispatcher = QtCore.QAbstractEventDispatcher.instance()
-    # event_dispatcher.installNativeEventFilter(win_event_filter)
-    # keybinder.register_hotkey(ex.winId(), "Shift+Ctrl+A", trayIcon.shortcut)
+    keybinder.init()
+    win_event_filter = WinEventFilter(keybinder)
+    event_dispatcher = QtCore.QAbstractEventDispatcher.instance()
+    event_dispatcher.installNativeEventFilter(win_event_filter)
+    keybinder.register_hotkey(ex.winId(), "Shift+Ctrl+A", ex.tray_icon.shortcut)
     # keybinder.register_hotkey(tab1.winId(), "Shift+Ctrl+B", tab1.testbutton)
 
     sys.exit(app.exec_())
