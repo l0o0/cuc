@@ -56,10 +56,19 @@ class TAB2(QtWidgets.QWidget):
         # send signal to update tray icon
 
     
+    def createTaskRow(self, donetask, row, tablewidget, config=None):
+        if config == None:
+            config = self.config.config
+        cellwidget = QtWidgets.QLabel("<s>%s</s>" % donetask.enrich_text(self.config.config['style']))
+        style_temp = "QLabel{padding-top:0;padding-left:5px;font-family:Arial,NotoColorEmoji;font-size:%spx}"
+        cellwidget.setStyleSheet(style_temp % config['style']['fontsize'])
+        tablewidget.setCellWidget(row, 0, cellwidget)
+        restoreButt = self.createButton()
+        tablewidget.setCellWidget(row, 1, restoreButt)    
+
+
     def saveDoneTask(self):
         done_texts = [t.format_text() + '\n' for t in self.tasklines_done]
         with open(self.config.config['donetxt'], 'a', encoding='utf-8') as handle:
             handle.writelines(done_texts)
             print('save done.txt, %s' % len(self.tasklines_done))
-        
-  

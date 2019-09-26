@@ -9,12 +9,18 @@ class HiddenLabel(QtWidgets.QLabel):
     QLable hide when mouse pressed
     '''
     def __init__(self, buddy, taskline, parent = None):
-        super().__init__()
+        super(HiddenLabel, self).__init__(parent)
         #self.setFixedHeight(50)
+        parent3 = self.parent().parent().parent()
+        if isinstance(parent3, QtWidgets.QStackedWidget):
+            config = parent3.widget(0).config
+        else:
+            config = self.parent().parent().config
         self.buddy = buddy
         self.taskline = taskline
-        self.setText(self.taskline.enrich_text())
-        self.setStyleSheet("QLabel{padding-top:0;font-family:Arial,NotoColorEmoji;font-size:15px}")
+        self.setText(self.taskline.enrich_text(config['style']))
+        style_temp  = "QLabel{padding-top:0;font-family:Arial,NotoColorEmoji;font-size:%spx}"
+        self.setStyleSheet(style_temp % config['style']['fontsize'])
 
     # left double clicked to edit
     def mouseDoubleClickEvent(self, event):
@@ -53,18 +59,17 @@ class EditableCell(QtWidgets.QWidget):
     '''
     QLineEdit show when HiddenLabel is hidden
     '''
-    def __init__(self, idx, tab1, parent = None):
+    def __init__(self, idx, parent = None):
         super(EditableCell, self).__init__(parent)
-        self.tab1 = tab1
-        self.taskline = self.tab1.tasks.tasklines[idx]
+        self.taskline = self.parent().tasks.tasklines[idx]
+        self.tab1 = self.parent()
         # Create ui
         self.myEdit = QtWidgets.QLineEdit()
         self.myEdit.hide() # Hide line edit
         self.myEdit.returnPressed.connect(self.textEdited)
         # Create our custom label, and assign myEdit as its buddy
-        self.myLabel = HiddenLabel(self.myEdit, self.taskline) 
+        self.myLabel = HiddenLabel(self.myEdit, self.taskline, self) 
         
-
         # Put them under a layout together
         hLayout = QtWidgets.QHBoxLayout()
         hLayout.addWidget(self.myLabel)
@@ -82,7 +87,7 @@ class EditableCell(QtWidgets.QWidget):
         self.tab1.tasks.tasklines[row] = self.taskline
         print('edited plain text', self.taskline.plain_text)
         # update text after saving
-        self.myLabel.setText(self.taskline.enrich_text())
+        self.myLabel.setText(self.taskline.enrich_text(self.tab1.config['style']))
         self.myLabel.taskline = self.taskline
         self.myEdit.hide()
         self.myLabel.show()
@@ -101,7 +106,7 @@ class TAB1(QtWidgets.QWidget):
         self.tasks = tasks
         self.layout = QtWidgets.QGridLayout()
         self.layout.setVerticalSpacing(2)
-
+        self.config = self.parent().config.config
         # add text edit line for new task
         self.textboxAdd = QtWidgets.QLineEdit()
         self.textboxAdd.setPlaceholderText('Input something ...')

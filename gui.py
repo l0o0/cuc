@@ -51,9 +51,9 @@ class CONFIG(object):
                 'keyvalue':{
                     'k':'#800080',
                     'v':'#800080'
-                }
+                },
+                "fontsize": 15
             },
-            "fontsize": 15,
             "layout":{'window_fixed':True,
                 'window_pos':'rightbottom',
                 'window_opacity':0.95},
@@ -82,8 +82,8 @@ class CONFIG(object):
 
     def saveConfigFile(self, config):
         with open(self.config_file, 'w', encoding='utf-8') as handle:
-                json.dump(self.default_config, handle, indent=True)
-        print('config save')
+                json.dump(config, handle, indent=True)
+        print('config saved')
 
 
     def restoreConfig(self):
@@ -100,9 +100,9 @@ class App(QWidget):
         self.top = 10
         self.width = 460
         self.height = 360
-        self.initUI()
         # read configure file
         self.config = CONFIG()
+        self.initUI()
         # create tasks by reading files in configure file
         tasks = Tasks(self.config.config['todotxt'], self.config.config['donetxt'])
         tasks.readFromFile()
@@ -122,7 +122,12 @@ class App(QWidget):
         # 设置窗口固定大小
         self.setFixedSize(self.width, self.height)
         # 设置窗体无边框
-        self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint | QtCore.Qt.Tool | QtCore.Qt.FramelessWindowHint | QtCore.Qt.CustomizeWindowHint)
+        if self.config.config['layout']['window_fixed']:
+            self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint | QtCore.Qt.Tool | QtCore.Qt.FramelessWindowHint | QtCore.Qt.CustomizeWindowHint)
+        else:
+            self.setWindowTitle('Cuc')
+            self.setWindowIcon(QtGui.QIcon('icons/icon1.png'))
+            self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint | QtCore.Qt.Window)
         # 设置透明背景
         self.setWindowOpacity(0.95)
         #self.setAttribute(QtCore.Qt.WA_TranslucentBackground) # 设置窗口背景透明
@@ -223,14 +228,16 @@ class App(QWidget):
 
 
     # update tab2 table
-    def updateTab2Table(self, insert_taskline):
-        self.tab2.tasklines_done.insert(0, insert_taskline)
-        self.tab2.tab2TaskTable.insertRow(0)
-        cellwidget = QtWidgets.QLabel("<s>%s</s>" % self.tab2.tasklines_done[0].enrich_text())
-        cellwidget.setStyleSheet("QLabel{padding-top:0;padding-left:5px;font-family:Arial,NotoColorEmoji;font-size:15px}")
-        self.tab2.tab2TaskTable.setCellWidget(0, 0, cellwidget)
-        restoreButt = self.tab2.createButton()
-        self.tab2.tab2TaskTable.setCellWidget(0, 1, restoreButt)
+    def updateTab2Table(self, insert_taskline=None):
+        if insert_taskline:
+            self.tab2.tasklines_done.insert(0, insert_taskline)
+            self.tab2.tab2TaskTable.insertRow(0)
+            self.tab2.createTaskRow(insert_taskline, 0, self.tab2.tab2TaskTable)
+        else:
+            self.tab2.tab2TaskTable.clear()
+            self.tab2.tab2TaskTable.setRowCount(len(self.tab2.tasklines_done))
+            for i, t in enumerate(self.tab2.tasklines_done):
+                self.tab2.createTaskRow(t, i, self.tab2.tab2TaskTable)
     
 
     @QtCore.pyqtSlot()
@@ -238,11 +245,11 @@ class App(QWidget):
         button = self.sender()
         if button.isChecked():
             print('on top')
-            self.setWindowFlags(QtCore.Qt.CustomizeWindowHint| QtCore.Qt.FramelessWindowHint | QtCore.Qt.WindowStaysOnTopHint| QtCore.Qt.Tool)
+            self.setWindowFlags(self.windowFlags() | QtCore.Qt.WindowStaysOnTopHint)
             self.rightBottomShow()
         else:
             print('no top')
-            self.setWindowFlags(QtCore.Qt.FramelessWindowHint |QtCore.Qt.Tool | QtCore.Qt.CustomizeWindowHint)
+            self.setWindowFlags(self.windowFlags() & ~QtCore.Qt.WindowStaysOnTopHint)
             self.rightBottomShow()
 
     
@@ -251,6 +258,14 @@ class App(QWidget):
             self.menu.show()
         else:
             self.menu.close()
+
+    
+    def reloadTable(self):
+        #print(self.config.config)
+        print('update tab1')
+        self.updateTab1Table()
+        print('update tab2')
+        self.updateTab2Table()
 
 
 class SystemTrayIcon(QSystemTrayIcon):

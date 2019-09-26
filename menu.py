@@ -1,9 +1,11 @@
+from copy import deepcopy
 from datetime import datetime
 from PyQt5 import QtWidgets, QtCore, QtGui
 
 
 
 class MENU(QtWidgets.QDialog):
+    reload_table_trigger = QtCore.pyqtSignal()
     def __init__(self, parent=None):
         super(MENU, self).__init__(parent)
         self.setWindowTitle('Preference')
@@ -24,12 +26,12 @@ class MENU(QtWidgets.QDialog):
         self.bb = QtWidgets.QDialogButtonBox()
         self.bb.setGeometry(QtCore.QRect(150, 250, 341, 32))
         self.bb.setOrientation(QtCore.Qt.Horizontal)
-        self.bb.setStandardButtons(QtWidgets.QDialogButtonBox.RestoreDefaults | QtWidgets.QDialogButtonBox.Cancel|QtWidgets.QDialogButtonBox.Ok)
+        self.bb.setStandardButtons(QtWidgets.QDialogButtonBox.Reset | QtWidgets.QDialogButtonBox.Cancel|QtWidgets.QDialogButtonBox.Ok)
         self.bb.button(QtWidgets.QDialogButtonBox.Cancel).setToolTip('Discard changes and close the menu')
         self.bb.button(QtWidgets.QDialogButtonBox.Ok).setToolTip('Save changes')
         self.bb.accepted.connect(self.accept)
         self.bb.rejected.connect(self.reject)
-        self.bb.clicked.connect(self.restoreDefaults)
+        self.bb.button(QtWidgets.QDialogButtonBox.Reset).clicked.connect(self.restoreDefaults)
         self.bottom_layout.addWidget(self.bb)
 
         self.layout.addWidget(self.tabs)
@@ -41,6 +43,8 @@ class MENU(QtWidgets.QDialog):
                             centerPoint.y() - self.height * 0.5,
                             self.width,
                             self.height))
+
+        self.reload_table_trigger.connect(self.parent().reloadTable)
 
     
     def initTab1(self):
@@ -69,8 +73,8 @@ class MENU(QtWidgets.QDialog):
         self.tab1groupBox2 = QtWidgets.QGroupBox('Window Layout')
         self.tab1groupBox2.setMaximumHeight(100)
         self.tab1groupBox2Layout = QtWidgets.QGridLayout()
-        self.sepWinButton = QtWidgets.QCheckBox("Get rid of the taskbar.")
-        self.sepWinButton.checked = False
+        self.sepWinButton = QtWidgets.QCheckBox("Window fixed.")
+        self.sepWinButton.setChecked(self.parent().config.config['layout']['window_fixed'])
         lb = QtWidgets.QLabel('Opacity')
         lb.setMaximumWidth(50)
         self.opacitySlider = QtWidgets.QSlider(QtCore.Qt.Horizontal)
@@ -117,6 +121,9 @@ class MENU(QtWidgets.QDialog):
 
         istart = 0
         for k1 in self.parent().config.config['style'].keys():
+            if k1 == 'fontsize':
+                continue 
+
             tmp = self.parent().config.config['style'][k1]
             if isinstance(tmp, dict):
                 for k2 in tmp.keys():
@@ -140,16 +147,16 @@ class MENU(QtWidgets.QDialog):
         self.fontsizeSlider.setMinimum(10)
         self.fontsizeSlider.setMaximumWidth(300)
         self.fontsizeSlider.setSingleStep(1)
-        self.fontsizeSlider.setValue(self.parent().config.config['fontsize'])
+        self.fontsizeSlider.setValue(self.parent().config.config['style']['fontsize'])
         self.fontsizeSlider.valueChanged.connect(self.changeFontSize)
         self.tab2groupBox2Layout.addWidget(self.fontsizeSlider, 0, 1)
-        self.fontsize = QtWidgets.QLabel(str(self.parent().config.config['fontsize']))
+        self.fontsize = QtWidgets.QLabel(str(self.parent().config.config['style']['fontsize']))
         #self.fontsize.setMaximumWidth(35)
         self.fontsize.setMaximumSize(35, 35)
         self.tab2groupBox2Layout.addWidget(self.fontsize, 0, 2)
         self.test_text = QtWidgets.QLabel("A字体")
         self.test_text.setMinimumHeight(40)
-        self.test_text.setStyleSheet("QLabel{font-size:%spx}" % self.parent().config.config['fontsize'])
+        self.test_text.setStyleSheet("QLabel{font-size:%spx}" % self.parent().config.config['style']['fontsize'])
         self.tab2groupBox2Layout.addWidget(self.test_text, 0, 3)
 
         self.tab2groupBox1.setLayout(self.tab2groupBox1Layout)
@@ -217,14 +224,14 @@ class MENU(QtWidgets.QDialog):
 
     # todo
     def saveConfig(self):
-        tmp_config = self.parent().config.config
+        tmp_config = deepcopy(self.parent().config.config)
         tmp_config['todotxt'] = self.todotxt.text()
         tmp_config['donetxt'] = self.donetxt.text()
-        tmp_config['layout']['window_fixed'] = self.sepWinButton.checked
-        tmp_config['layout']['window_opacity'] = self.opacitySlider.value()
+        tmp_config['layout']['window_fixed'] = True if self.sepWinButton.checkState() > 0 else False
+        tmp_config['layout']['window_opacity'] = self.opacitySlider.value()/ 100
         tmp_config['hotkey']['pin'] = self.keepTop.text()
         tmp_config['hotkey']['display'] = self.showWin.text()
-        tmp_config['fontsize'] = int(self.fontsize.text())
+        tmp_config['style']['fontsize'] = int(self.fontsize.text())
         tmp_config['style']['priority']['(A)'] = self.tab2groupBox1Layout.itemAt(1).widget().text()
         tmp_config['style']['priority']['(B)'] = self.tab2groupBox1Layout.itemAt(4).widget().text()
         tmp_config['style']['priority']['(C)'] = self.tab2groupBox1Layout.itemAt(7).widget().text()
@@ -236,7 +243,7 @@ class MENU(QtWidgets.QDialog):
         tmp_config['style']['context'] = self.tab2groupBox1Layout.itemAt(25).widget().text()
         tmp_config['style']['keyvalue']['k'] = self.tab2groupBox1Layout.itemAt(28).widget().text()
         tmp_config['style']['keyvalue']['v'] = self.tab2groupBox1Layout.itemAt(31).widget().text()
-        #print(tmp_config)
+        return tmp_config
 
     # def openColorDialog(self):
     #     button = self.sender()
@@ -256,11 +263,33 @@ class MENU(QtWidgets.QDialog):
     def accept(self):
         # new changes should take effect.
         print('accept')  
-        self.saveConfig()
+        tmp_config = self.saveConfig()
+        current_config = deepcopy(self.parent().config.config)
+        
+        # reload tab to render new style
+        if tmp_config['style'] != current_config['style']:
+            self.parent().config.config['style'] = tmp_config['style']
+            
+            self.reload_table_trigger.emit()
+            print('update table')
+        # show message to info these config will take place after restart.
+        elif tmp_config['layout'] != current_config['layout']:
+            QtWidgets.QMessageBox.information(self, "Info", "Layout config will take place after restart.")
+
+        if tmp_config != current_config:
+            self.parent().config.config = tmp_config
+            self.parent().config.saveConfigFile(tmp_config)
+            print('update config')
+        self.close()
+
 
     def reject(self):
+        print('cancel')
         self.close()
+
 
     def restoreDefaults(self):
         print('restore')
+        self.parent().config.restoreConfig()
+        self.parent().config.config = self.parent().config.default_config
 
