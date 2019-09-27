@@ -189,24 +189,23 @@ class TaskLine(object):
 
 
 class Tasks(object):
-    def __init__(self, todotxt, donetxt):
-        self.todotxt = todotxt
-        self.donetxt = donetxt
+    def __init__(self):
+        pass
 
     
-    def readFromFile(self, f='todo'):
+    def readFromFile(self, todo):
         self.tasklines = []
-        with open(self.todotxt, encoding='utf-8') as handle:
+        with open(todo, encoding='utf-8') as handle:
             for line in handle.readlines():
                 t = TaskLine()
                 t.parser(line)
                 self.tasklines.append(t)
             
         
-    def saveToFile(self):
+    def saveToFile(self, todo):
         writelines = [t.format_text() + '\n' for t in self.tasklines]
         print('all lines to write', writelines)       
-        with open(self.todotxt, 'w', encoding='utf-8') as handle:          
+        with open(todo, 'w', encoding='utf-8') as handle:          
             handle.writelines(writelines)
         print('save todo.txt')
 

@@ -104,8 +104,8 @@ class App(QWidget):
         self.config = CONFIG()
         self.initUI()
         # create tasks by reading files in configure file
-        tasks = Tasks(self.config.config['todotxt'], self.config.config['donetxt'])
-        tasks.readFromFile()
+        tasks = Tasks()
+        tasks.readFromFile(self.config.config['todotxt'])
         tasks.taskSort()
         # create tray icon 
         self.initTrayIcon(tasks.tasklines)
@@ -307,8 +307,8 @@ class SystemTrayIcon(QSystemTrayIcon):
 
 
     def exit(self):
-        self.parent().tab1.tasks.saveToFile()
-        self.parent().tab2.saveDoneTask()
+        self.parent().tab1.tasks.saveToFile(self.parent().config.config['todotxt'])
+        self.parent().tab2.saveDoneTask(self.parent().config.config['donetxt'])
         QtCore.QCoreApplication.exit()        
 
 
