@@ -124,8 +124,8 @@ class TAB1(QtWidgets.QWidget):
         self.tab1TaskTable.setColumnCount(3)
         self.tab1TaskTable.setRowCount(len(self.tasks.tasklines))
         self.tab1TaskTable.setColumnWidth(0, 380)
-        self.tab1TaskTable.setColumnWidth(1, 20)
-        self.tab1TaskTable.setColumnWidth(2, 20)
+        self.tab1TaskTable.setColumnWidth(1, 25)
+        self.tab1TaskTable.setColumnWidth(2, 25)
         self.tab1TaskTable.horizontalHeader().setSectionResizeMode(0, QtWidgets.QHeaderView.Fixed)
         self.layout.addWidget(self.tab1TaskTable, 1, 0, 15, 13)
 
@@ -153,15 +153,16 @@ class TAB1(QtWidgets.QWidget):
 
     # create button in taskline
     def createButton(self, t):
-        self.butt = QtWidgets.QPushButton()
-        self.butt.setMaximumSize(25, 25)
+        butt = QtWidgets.QPushButton()
+        butt.setMaximumSize(25, 25)
+        butt.setStyleSheet("QPushButton{border:1px;}")
         if t == 'delete':
-            self.butt.setIcon(QtGui.QIcon("icons/cancel-circle.png"))      
-            self.butt.clicked.connect(self.deleteButtonAction)     
+            butt.setIcon(QtGui.QIcon("icons/cancel-circle.png"))      
+            butt.clicked.connect(self.deleteButtonAction)     
         elif t == 'checkmark':
-            self.butt.setIcon(QtGui.QIcon("icons/checkmark.png"))
-            self.butt.clicked.connect(self.checkButtonAction)
-        return self.butt
+            butt.setIcon(QtGui.QIcon("icons/checkmark.png"))
+            butt.clicked.connect(self.checkButtonAction)
+        return butt
 
 
     # create editable cell

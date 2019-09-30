@@ -35,11 +35,12 @@ class TAB2(QtWidgets.QWidget):
 
     # create button in taskline
     def createButton(self):
-        self.butt = QtWidgets.QPushButton()
-        self.butt.setMaximumSize(25, 25)
-        self.butt.setIcon(QtGui.QIcon("icons/restore.png"))      
-        self.butt.clicked.connect(self.restoreButtonAction)     
-        return self.butt
+        butt = QtWidgets.QPushButton()
+        butt.setMaximumSize(25, 25)
+        butt.setIcon(QtGui.QIcon("icons/restore.png"))      
+        butt.setStyleSheet("QPushButton{border:1px;}")
+        butt.clicked.connect(self.restoreButtonAction)     
+        return butt
 
     
     def restoreButtonAction(self):
