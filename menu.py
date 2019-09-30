@@ -52,9 +52,7 @@ class MENU(QtWidgets.QDialog):
         self.tab1.layout = QtWidgets.QGridLayout()
         self.tab1.layout.setAlignment(QtCore.Qt.AlignTop)
 
-        self.tab1groupBox1 = QtWidgets.QGroupBox('Todo File')
-        self.tab1groupBox1.setMaximumHeight(100)
-        self.tab1groupBox1Layout = QtWidgets.QGridLayout()
+        self.tab1groupBox1, self.tab1groupBox1Layout = self.createGroupBox("Todo File", 200)
         self.createLabel(self.tab1groupBox1Layout, 'TODO', 50, 0, 0)
         self.createLabel(self.tab1groupBox1Layout, 'DONE', 50, 1, 0)
         self.todotxt = QtWidgets.QLineEdit(self.parent().config.config['todotxt'])
@@ -70,10 +68,8 @@ class MENU(QtWidgets.QDialog):
         self.tab1groupBox1.setLayout(self.tab1groupBox1Layout)
         self.tab1.layout.addWidget(self.tab1groupBox1, 0, 0)
 
-        self.tab1groupBox2 = QtWidgets.QGroupBox('Window Layout')
-        self.tab1groupBox2.setMaximumHeight(100)
-        self.tab1groupBox2Layout = QtWidgets.QGridLayout()
-        self.sepWinButton = QtWidgets.QCheckBox("Window fixed.")
+        self.tab1groupBox2, self.tab1groupBox2Layout = self.createGroupBox("Window Layout", 200)
+        self.sepWinButton = QtWidgets.QCheckBox("Window fixed")
         self.sepWinButton.setChecked(self.parent().config.config['layout']['window_fixed'])
         lb = QtWidgets.QLabel('Opacity')
         lb.setMaximumWidth(50)
@@ -85,17 +81,21 @@ class MENU(QtWidgets.QDialog):
         self.opacitySlider.setSingleStep(1)
         self.opacityLabel = QtWidgets.QLabel(str(self.opacitySlider.value()/100))
         self.opacitySlider.valueChanged.connect(self.changeOpacity)
+        #% (self.parent().maxwidth, self.parent().maxheight)
+        self.createLabel(self.tab1groupBox2Layout, "Window Position" , 100, 2, 0)
+        xpin = self.createSpinBox(self.parent().config.config['layout']['window_pos'][0], self.parent().maxwidth)
+        ypin = self.createSpinBox(self.parent().config.config['layout']['window_pos'][1], self.parent().maxheight)
+        
         self.tab1groupBox2Layout.addWidget(self.sepWinButton, 0, 0)
         self.tab1groupBox2Layout.addWidget(lb, 1,0)
         self.tab1groupBox2Layout.addWidget(self.opacitySlider, 1, 1 )
         self.tab1groupBox2Layout.addWidget(self.opacityLabel, 1, 2)
+        self.tab1groupBox2Layout.addWidget(xpin, 2, 1)
+        self.tab1groupBox2Layout.addWidget(ypin, 2, 2)
         self.tab1groupBox2.setLayout(self.tab1groupBox2Layout)
         self.tab1.layout.addWidget(self.tab1groupBox2, 1,0)
 
-        self.tab1groupBox3 = QtWidgets.QGroupBox('Global Shortcuts')
-        self.tab1groupBox3.setMaximumHeight(100)
-        self.tab1groupBox3Layout = QtWidgets.QGridLayout()
-        self.tab1groupBox3Layout.setAlignment(QtCore.Qt.AlignLeft)
+        self.tab1groupBox3, self.tab1groupBox3Layout = self.createGroupBox("Global Shortcuts", 100)
         self.createLabel(self.tab1groupBox3Layout, 'Show Window', 90, 0, 0)
         self.createLabel(self.tab1groupBox3Layout, "Stay on Top", 90, 1, 0)
         self.showWin = QtWidgets.QLineEdit(self.parent().config.config['hotkey']['display'])
@@ -115,9 +115,7 @@ class MENU(QtWidgets.QDialog):
         self.tab2.layout = QtWidgets.QGridLayout()
         self.tab2.layout.setAlignment(QtCore.Qt.AlignTop)
 
-        self.tab2groupBox1 = QtWidgets.QGroupBox("Task Style")
-        self.tab2groupBox1Layout = QtWidgets.QGridLayout()
-        self.tab2groupBox1Layout.setAlignment(QtCore.Qt.AlignLeft)
+        self.tab2groupBox1, self.tab2groupBox1Layout = self.createGroupBox("Task Style", 500)
 
         istart = 0
         for k1 in self.parent().config.config['style'].keys():
@@ -137,10 +135,7 @@ class MENU(QtWidgets.QDialog):
                 self.createColorButton(istart%6, 2+ (istart//6)*3, tmp)
                 istart += 1
 
-        self.tab2groupBox2 = QtWidgets.QGroupBox("Task Font Size")
-        self.tab2groupBox2.setMaximumHeight(80)
-        self.tab2groupBox2Layout = QtWidgets.QGridLayout()
-        self.tab2groupBox2Layout.setAlignment(QtCore.Qt.AlignLeft)
+        self.tab2groupBox2, self.tab2groupBox2Layout = self.createGroupBox("Task Font Size", 80)
         self.createLabel(self.tab2groupBox2Layout, 'Font Size', 80, 0, 0)
         self.fontsizeSlider = QtWidgets.QSlider(QtCore.Qt.Horizontal)
         self.fontsizeSlider.setMaximum(20)
@@ -176,6 +171,22 @@ class MENU(QtWidgets.QDialog):
         self.tab3.layout.addWidget(lb)
         self.tab3.setLayout(self.tab3.layout)
     
+
+    def createGroupBox(self, title, height):
+        groupBox = QtWidgets.QGroupBox(title)
+        groupBox.setMaximumHeight(height)
+        groupBoxLayout = QtWidgets.QGridLayout()
+        groupBoxLayout.setAlignment(QtCore.Qt.AlignLeft)
+        return groupBox, groupBoxLayout
+
+
+    def createSpinBox(self, value, maxvalue):
+        spinbox = QtWidgets.QSpinBox()
+        spinbox.setMaximum(maxvalue)
+        spinbox.setMaximumSize(80, 80)
+        spinbox.setValue(value)
+        return spinbox
+
 
     def createBroswerButton(self):
         butt = QtWidgets.QPushButton('Broswer')

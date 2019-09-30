@@ -55,7 +55,7 @@ class CONFIG(object):
                 "fontsize": 15
             },
             "layout":{'window_fixed':True,
-                'window_pos':'rightbottom',
+                'window_pos': [886,403],
                 'window_opacity':0.95},
             "hotkey":{
                 "pin":"Shift+Ctrl+P",
@@ -133,6 +133,8 @@ class App(QWidget):
         #self.setAttribute(QtCore.Qt.WA_TranslucentBackground) # 设置窗口背景透明
 
         ag = QDesktopWidget().availableGeometry()    # 显示器可用的长宽信息
+        self.maxwidth = ag.width()
+        self.maxheight = ag.height()
         self.fixedGeometry = (ag.width() - self.width - 20, 
                         ag.height() - self.height - 5, 
                         self.width, 
@@ -337,6 +339,9 @@ class SystemTrayIcon(QSystemTrayIcon):
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
+    default_font = QtGui.QFont('Arial')
+    default_font.setPointSize(10)
+    app.setFont(default_font)
     ex = App()
     
 
