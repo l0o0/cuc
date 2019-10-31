@@ -17,6 +17,7 @@ from pyqtkeybind import keybinder
 from task import Tasks, TaskLine
 from tab1 import TAB1
 from tab2 import TAB2 
+from tab3 import TAB3
 from menu import MENU
 
 
@@ -112,7 +113,7 @@ class App(QWidget):
         # create tab1,  parent is APP
         self.initTab1(tasks)    
         self.initTab2()  
-        self.tab3()
+        self.initTab3()
         self.menu = MENU(self)
         self.initTab()
         QtGui.QFontDatabase.addApplicationFont('font/NotoColorEmoji.ttf')
@@ -193,13 +194,8 @@ class App(QWidget):
 
     
     # tab3 
-    def tab3(self):
-        self.tab3 = QWidget()
-        self.tab3.layout = QVBoxLayout()
-        lb = QLabel()
-        lb.setText('Summary')
-        self.tab3.layout.addWidget(lb)
-        self.tab3.setLayout(self.tab3.layout)
+    def initTab3(self):
+        self.tab3 = TAB3(self)
 
     # hide to system tray instead of close
     def closeEvent(self, event):
