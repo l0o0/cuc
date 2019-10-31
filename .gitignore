@@ -3,6 +3,9 @@ __pycache__/
 *$py.class
 .pylintrc
 *.spec
+test.py
+todo.txt
+done.txt
 
 # Distribution / packaging
 .Python
@@ -24,6 +27,8 @@ share/python-wheels/
 .installed.cfg
 *.egg
 MANIFEST
+env/
+.vscode/
 
 # PyBuilder
 target/
