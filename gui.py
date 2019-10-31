@@ -339,7 +339,10 @@ class SystemTrayIcon(QSystemTrayIcon):
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    default_font = QtGui.QFont('Arial')
+    if sys.platform.startswith('win'):
+        default_font = QtGui.QFont('Microsoft YaHei')
+    else:
+        default_font = QtGui.QFont('Arial')
     default_font.setPointSize(10)
     app.setFont(default_font)
     ex = App()

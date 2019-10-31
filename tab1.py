@@ -19,7 +19,7 @@ class HiddenLabel(QtWidgets.QLabel):
         self.buddy = buddy
         self.taskline = taskline
         self.setText(self.taskline.enrich_text(config['style']))
-        style_temp  = "QLabel{padding-top:0;font-family:Arial,NotoColorEmoji;font-size:%spx}"
+        style_temp  = "QLabel{padding-top:0;font-family:Arial,SimHei,NotoColorEmoji;font-size:%spx}"
         self.setStyleSheet(style_temp % config['style']['fontsize'])
 
     # left double clicked to edit
