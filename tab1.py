@@ -111,7 +111,7 @@ class TAB1(QtWidgets.QWidget):
         self.textboxAdd = QtWidgets.QLineEdit()
         self.textboxAdd.setPlaceholderText('Input something ...')
         self.textboxAdd.setFixedHeight(25)
-        self.textboxAdd.setFixedWidth(436)
+        self.textboxAdd.setFixedWidth(448)
         self.layout.addWidget(self.textboxAdd, 0, 0, 1, 10)
         self.textboxAdd.returnPressed.connect(self.addLine)
 
