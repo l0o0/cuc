@@ -29,28 +29,28 @@ class HiddenLabel(QtWidgets.QLabel):
             #print('double click', self.taskline.plain_text)
             self.buddy.setText(self.taskline.plain_text)
             self.buddy.show()
-            self.buddy.setFocus()
+            # self.buddy.setFocus()
 
 
 
-class HiddenButton(QtWidgets.QPushButton):
-    def __init__(self):
-        super().__init__()
-        self.op = QtWidgets.QGraphicsOpacityEffect()
-        self.op.setOpacity(0)
-        self.setGraphicsEffect(self.op)
+# class HiddenButton(QtWidgets.QPushButton):
+#     def __init__(self):
+#         super().__init__()
+#         self.op = QtWidgets.QGraphicsOpacityEffect()
+#         self.op.setOpacity(0)
+#         self.setGraphicsEffect(self.op)
     
-    def enterEvent(self, QEvent):
-        print('Enter')
-        time.sleep(0.25)
-        self.op.setOpacity(1)
-        self.setGraphicsEffect(self.op)
+#     def enterEvent(self, QEvent):
+#         print('Enter')
+#         time.sleep(0.25)
+#         self.op.setOpacity(1)
+#         self.setGraphicsEffect(self.op)
     
-    def leaveEvent(self, QEvent):
-        print('leave')
-        time.sleep(0.25)
-        self.op.setOpacity(0)
-        self.setGraphicsEffect(self.op)
+#     def leaveEvent(self, QEvent):
+#         print('leave')
+#         time.sleep(0.25)
+#         self.op.setOpacity(0)
+#         self.setGraphicsEffect(self.op)
         
 
 
@@ -91,7 +91,7 @@ class EditableCell(QtWidgets.QWidget):
         self.myLabel.taskline = self.taskline
         self.myEdit.hide()
         self.myLabel.show()
-        self.myLabel.setFocus()
+        # self.myLabel.setFocus()
         self.tab1.edit_trigger.emit()
 
 

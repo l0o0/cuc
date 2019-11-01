@@ -117,6 +117,9 @@ class App(QWidget):
         self.menu = MENU(self)
         self.initTab()
         QtGui.QFontDatabase.addApplicationFont('font/NotoColorEmoji.ttf')
+        # focus on new task edit line
+        self.tab1.textboxAdd.setFocus()
+
 
         
     def initUI(self):
@@ -142,6 +145,8 @@ class App(QWidget):
                         self.height)
         self.setGeometry(*self.fixedGeometry)
         self.show()
+        self.activateWindow()
+
 
 
     def initTrayIcon(self, init_tasklines):
@@ -206,6 +211,9 @@ class App(QWidget):
     def rightBottomShow(self):
         self.setGeometry(*self.fixedGeometry)
         self.show()
+        self.activateWindow()
+        # focus on new task edit line
+        self.tab1.textboxAdd.setFocus()
 
     
     # update tab1 table 
