@@ -8,7 +8,7 @@ from emoji import emojize
 class TaskLine(object):
     def __init__(self):
         # completion mark
-        self.re_mask = re.compile("^x")
+        self.re_mask = re.compile("(^x)\s")
         # priority indicats by an uppercase character from A to Z
         self.re_priority = re.compile('^x?([\(（][A-Z][\)）])\s')
         # completion date and creation date
@@ -39,6 +39,8 @@ class TaskLine(object):
 
         # reserved word for some functions
         self.reserved_words = ['@p']
+
+        
     def parser(self, plain_text):
         break_len = 0
         self.plain_text = plain_text.strip()  
@@ -46,8 +48,7 @@ class TaskLine(object):
         # handle mask 
         self.mask = self.re_mask.search(self.plain_text)
         if self.mask:
-            self.mask = self.mask.group()
-            self.status = 'done'
+            self.mask = self.mask.groups()[0]
         else:
             self.mask = None 
 
@@ -65,9 +66,12 @@ class TaskLine(object):
         if len(self.dates) == 2:
             self.completion_date = datetime.strptime(self.dates[0], '%Y-%m-%d')
             self.creation_date = datetime.strptime(self.dates[1], '%Y-%m-%d')
-        elif len(self.dates) == 1:
+        elif len(self.dates) == 1 and self.mask != 'x':
             self.completion_date = None
             self.creation_date = datetime.strptime(self.dates[0], '%Y-%m-%d')
+        elif len(self.dates) == 1 and self.mask == 'x':
+            self.completion_date = datetime.strptime(self.dates[0], '%Y-%m-%d')
+            self.creation_date = None
         else:
             self.completion_date = None 
             self.creation_date = None
@@ -160,7 +164,7 @@ class TaskLine(object):
 
 
     def format_text(self):
-        text = "%s%s %s %s %s" % (
+        text = "%s %s %s %s %s" % (
             self.mask if self.mask else "", 
             self.priority if self.priority else "", 
             datetime.strftime(self.completion_date, '%Y-%m-%d') if self.completion_date else "", 
@@ -193,12 +197,14 @@ class Tasks(object):
         pass
 
     
-    def readFromFile(self, todo):
+    def readFromFile(self, todo, status=None):
         self.tasklines = []
         with open(todo, encoding='utf-8') as handle:
             for line in handle.readlines():
                 t = TaskLine()
                 t.parser(line)
+                if status == 'saved':
+                    t.status = 'saved'
                 self.tasklines.append(t)
             
         
