@@ -108,6 +108,9 @@ class App(QWidget):
         tasks = Tasks()
         tasks.readFromFile(self.config.config['todotxt'])
         tasks.taskSort()
+        # create done tasks list from done.txt, add status saved.
+        self.doneTasks = Tasks()
+        self.doneTasks.readFromFile(self.config.config['donetxt'], 'saved')
         # create tray icon 
         self.initTrayIcon(tasks.tasklines)
         # create tab1,  parent is APP
@@ -196,6 +199,8 @@ class App(QWidget):
     # tab2 
     def initTab2(self):
         self.tab2 = TAB2(self)
+        self.tab2.doneTasks = self.doneTasks
+        print('done tasks', len(self.tab2.doneTasks.tasklines))
 
     
     # tab3 
@@ -236,13 +241,14 @@ class App(QWidget):
     # update tab2 table
     def updateTab2Table(self, insert_taskline=None):
         if insert_taskline:
-            self.tab2.tasklines_done.insert(0, insert_taskline)
+            self.tab2.doneTasks.tasklines.insert(0, insert_taskline)
             self.tab2.tab2TaskTable.insertRow(0)
             self.tab2.createTaskRow(insert_taskline, 0, self.tab2.tab2TaskTable)
         else:
             self.tab2.tab2TaskTable.clear()
-            self.tab2.tab2TaskTable.setRowCount(len(self.tab2.tasklines_done))
-            for i, t in enumerate(self.tab2.tasklines_done):
+            unsavedDoneTasks = [t for t in self.tab2.doneTasks.tasklines if getattr(t, 'status', None)  != 'saved']
+            self.tab2.tab2TaskTable.setRowCount(len(unsavedDoneTasks))
+            for i, t in enumerate(unsavedDoneTasks):
                 self.tab2.createTaskRow(t, i, self.tab2.tab2TaskTable)
     
 

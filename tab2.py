@@ -8,7 +8,7 @@ class TAB2(QtWidgets.QWidget):
     def __init__(self, parent=None):
         super(TAB2, self).__init__(parent)
         self.config = self.parent().config
-        self.tasklines_done = []
+        self.doneTasks = []
         self.layout = QtWidgets.QVBoxLayout()
 
         # add layout for added tasks
@@ -48,11 +48,11 @@ class TAB2(QtWidgets.QWidget):
         if button:
             row = self.tab2TaskTable.indexAt(button.pos()).row()
             self.tab2TaskTable.removeRow(row)
-            taskline = self.tasklines_done[row]
+            taskline = self.doneTasks[row]
             taskline.mask = None
             taskline.completion_date = None
             self.restore_trigger.emit(taskline)
-            del self.tasklines_done[row]
+            del self.doneTasks[row]
         print('restore', row, taskline.format_text())
         # send signal to update tray icon
 
@@ -69,7 +69,7 @@ class TAB2(QtWidgets.QWidget):
 
 
     def saveDoneTask(self, done):
-        done_texts = [t.format_text() + '\n' for t in self.tasklines_done]
+        done_texts = [t.format_text() + '\n' for t in self.doneTasks.tasklines if getattr(t, 'status', None)  != 'saved']
         with open(done, 'a', encoding='utf-8') as handle:
             handle.writelines(done_texts)
-            print('save done.txt, %s' % len(self.tasklines_done))
+            print('save done.txt, %s' % len(self.doneTasks.tasklines))
