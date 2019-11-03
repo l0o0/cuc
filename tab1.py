@@ -74,7 +74,7 @@ class EditableCell(QtWidgets.QWidget):
         hLayout = QtWidgets.QHBoxLayout()
         hLayout.addWidget(self.myLabel)
         hLayout.addWidget(self.myEdit)
-        hLayout.setContentsMargins(0, 0, 0, 0)
+        hLayout.setContentsMargins(5, 0, 0, 0)
         self.setLayout(hLayout)
 
 
@@ -192,7 +192,7 @@ class TAB1(QtWidgets.QWidget):
         if button:
             row = self.tab1TaskTable.indexAt(button.pos()).row()
             self.checkcellwidget = self.tab1TaskTable.cellWidget(row, 0)
-            completion_date = datetime.now()
+            completion_date = datetime.now().replace(hour=0, second=0, microsecond=0)
             self.checkcellwidget.taskline.completion_date = completion_date
             self.checkcellwidget.taskline.mask = 'x'
             print('check format text', row, self.checkcellwidget.taskline.format_text())
