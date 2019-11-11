@@ -11,7 +11,7 @@ class TaskCalendar(QtWidgets.QCalendarWidget):
     def paintCell(self, painter, rect, date):
         QtWidgets.QCalendarWidget.paintCell(self, painter, rect, date)
         # print(self.parent().parent().widget(1)) # this is tab2 
-        tmp = self.parent().parent().widget(1).doneTasks.tasklines
+        tmp = self.parent().parent().widget(1).doneTask.tasklines
         donetasks = [t for t in tmp if t.completion_date == date]
         createtasks = [t for t in tmp if t.creation_date == date]
         painter.setPen(QtCore.Qt.NoPen)
@@ -56,14 +56,14 @@ class TAB3(QtWidgets.QWidget):
     
 
     def showDate(self, date):
-        tmp = self.parent().parent().widget(1).doneTasks.tasklines
+        tmp = self.parent().parent().widget(1).doneTask.tasklines
         donetasks = [t for t in tmp if t.completion_date == date]
         createtasks = [t for t in tmp if t.creation_date == date]
         self.label.setText("%s, create tasks: %s, done tasks: %s" % (date.toString(QtCore.Qt.ISODate), len(createtasks), len(donetasks)))
     
 
     def showTasks(self, date):
-        tmp = self.parent().parent().widget(1).doneTasks.tasklines
+        tmp = self.parent().parent().widget(1).doneTask.tasklines
         donetasks = [t for t in tmp if t.completion_date == date]
         createtasks = [t for t in tmp if t.creation_date == date]
         taskDialog = QtWidgets.QDialog(self)
