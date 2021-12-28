@@ -123,6 +123,12 @@ class App(QWidget):
         # focus on new task edit line
         self.tab1.textboxAdd.setFocus()
 
+        # # Keep window state
+        # self.settings = QtCore.QSettings("My Soft", "Cuc")
+        # if not self.settings.value("geometry") == None:
+        #     self.restoreGeometry(self.settings.value("geometry"))
+        # if not self.settings.value("windowState") == None:
+        #     self.restoreState(self.settings.value("windowState"))
 
         
     def initUI(self):
@@ -136,14 +142,16 @@ class App(QWidget):
             self.setWindowIcon(QtGui.QIcon('icons/icon1.png'))
             self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint | QtCore.Qt.Window)
         # 设置透明背景
-        self.setWindowOpacity(0.95)
+        self.setWindowOpacity(self.config.config['layout']['window_opacity'])
         #self.setAttribute(QtCore.Qt.WA_TranslucentBackground) # 设置窗口背景透明
 
         ag = QDesktopWidget().availableGeometry()    # 显示器可用的长宽信息
+        print("显示器：", ag.width(), ag.height())
         self.maxwidth = ag.width()
         self.maxheight = ag.height()
-        self.fixedGeometry = (ag.width() - self.width - 20, 
-                        ag.height() - self.height - 5, 
+        # 固定窗口位置
+        self.fixedGeometry = (self.config.config['layout']['window_pos'][0], 
+                        self.config.config['layout']['window_pos'][1], 
                         self.width, 
                         self.height)
         self.setGeometry(*self.fixedGeometry)
@@ -209,14 +217,19 @@ class App(QWidget):
 
     # hide to system tray instead of close
     def closeEvent(self, event):
+        # self.settings.setValue("geometry", self.saveGeometry())
+        # self.settings.setValue("windowState", self.saveState())
+        print(self.settings)
         event.ignore()
         self.hide()
 
     # display window in the right bottom
     def rightBottomShow(self):
-        self.setGeometry(*self.fixedGeometry)
+        if self.config.config['layout']['window_fixed']:
+            self.setGeometry(*self.fixedGeometry)
         self.show()
         self.activateWindow()
+        # print(self.pos())
         # focus on new task edit line
         self.tab1.textboxAdd.setFocus()
 
